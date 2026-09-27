@@ -1,16 +1,16 @@
 {
-  "report_generated_at": "2026-09-27T10:57:09.124715+00:00",
+  "report_generated_at": "2026-09-27T12:26:39.466304+00:00",
   "total_spans": 36,
-  "total_tokens": 3613,
-  "estimated_cost_usd": 0.000912,
+  "total_tokens": 3258,
+  "estimated_cost_usd": 0.000805,
   "latency_metrics": {
-    "p50_latency_ms": 2495.09,
-    "p95_latency_ms": 6288.61,
-    "thinking_latency_p50_ms": 2699.27,
-    "acting_latency_p50_ms": 1619.56,
-    "tool_latency_p50_ms": 2787.84
+    "p50_latency_ms": 626.66,
+    "p95_latency_ms": 3982.84,
+    "thinking_latency_p50_ms": 697.15,
+    "acting_latency_p50_ms": 418.29,
+    "tool_latency_p50_ms": 3669.14
   },
-  "success_rate": 0.9722,
+  "success_rate": 0.7778,
   "accuracy_score": 1.0,
   "hallucination_rate": 0.25
 }

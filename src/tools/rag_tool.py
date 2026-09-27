@@ -190,7 +190,7 @@ class PolicyRAGTool:
             boost = sum(BOOSTS.get(w, 0.0) for w in tokens if w in chunk_tokens or w in title_tokens)
             score = (title_overlap * 3.0 + body_overlap + boost) / (len(tokens) + 1.0)
             
-            if score > 0:
+            if score >= 0.25:
                 scored.append({
                     "clause_id": chunk["clause_id"],
                     "title": chunk["title"],
@@ -230,7 +230,7 @@ class PolicyRAGTool:
                 q_emb = self.encoder.encode([query], normalize_embeddings=True)
                 scores, indices = self.index.search(np.array(q_emb, dtype=np.float32), min(len(self.chunks), 5))
                 for score, idx in zip(scores[0], indices[0]):
-                    if idx < len(self.chunks):
+                    if idx < len(self.chunks) and float(score) >= 0.20:
                         match_chunk = self.chunks[idx]
                         if not is_exclusion_candidate and "POL-EXCL" in match_chunk["clause_id"]:
                             continue
@@ -245,8 +245,8 @@ class PolicyRAGTool:
             except Exception as e:
                 print(f"[PolicyRAGTool] Query search error ({e}).")
 
-        if not retrieved:
-            # Deterministic lexical retrieval fallback (BM25 term-overlap matching)
+        if not retrieved and (self.encoder is None or self.index is None):
+            # Deterministic lexical retrieval fallback (BM25 term-overlap matching) when dense index is absent
             retrieved = self._deterministic_lexical_search(query, top_k=min(len(self.chunks), 5))
 
         # Exclusions gating strictly enforces AC-01 policy rules
@@ -271,14 +271,14 @@ class PolicyRAGTool:
             is_covered = True
         else:
             best = {
-                "clause_id": "POL-SEC-04-COLLISION",
-                "title": "Collision Coverage",
-                "excerpt": "Standard collision coverage applies to direct physical loss.",
-                "deductible": 500.0,
-                "limit": 50000.0,
-                "score": 1.0
+                "clause_id": "NO_MATCH",
+                "title": "No Matching Policy Clause Found",
+                "excerpt": "No relevant policy clause or coverage endorsement identified for this loss description. Manual adjuster escalation required.",
+                "deductible": 0.0,
+                "limit": 0.0,
+                "score": 0.0
             }
-            is_covered = True
+            is_covered = False
 
         result = {
             "query": query,

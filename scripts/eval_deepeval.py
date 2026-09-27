@@ -193,6 +193,28 @@ def run_deepeval_benchmark() -> Dict[str, Any]:
         total_faithfulness += f_score
         total_hallucination += h_score
 
+    grounded_cases = [c for c in results if c["expected_to_pass"]]
+    adversarial_cases = [c for c in results if not c["expected_to_pass"]]
+
+    grounded_passed_count = sum(1 for c in grounded_cases if c["faithfulness_passed"] and c["hallucination_passed"])
+    grounded_accuracy = round(grounded_passed_count / len(grounded_cases), 4) if grounded_cases else 1.0
+
+    # For intentional bad examples (negative controls), failure of faithfulness/hallucination check means SUCCESSFUL DETECTION
+    hallucination_detected_count = sum(1 for c in adversarial_cases if (not c["faithfulness_passed"] or not c["hallucination_passed"]))
+    hallucination_recall = round(hallucination_detected_count / len(adversarial_cases), 4) if adversarial_cases else 1.0
+
+    system_failures = [c for c in grounded_cases if not (c["faithfulness_passed"] and c["hallucination_passed"])]
+
+    for c in results:
+        if not c["expected_to_pass"]:
+            c["evaluation_type"] = "INTENTIONAL_ADVERSARIAL_NEGATIVE_CONTROL"
+            c["hallucination_detected"] = (not c["faithfulness_passed"] or not c["hallucination_passed"])
+            c["is_system_failure"] = False  # Intentional negative test case detection is not a system failure
+        else:
+            c["evaluation_type"] = "GROUNDED_CLAIMS_EVALUATION"
+            c["hallucination_detected"] = not c["hallucination_passed"]
+            c["is_system_failure"] = not (c["faithfulness_passed"] and c["hallucination_passed"])
+
     n = len(test_cases_data)
     avg_f = round(total_faithfulness / n, 3)
     avg_h = round(total_hallucination / n, 3)
@@ -204,8 +226,17 @@ def run_deepeval_benchmark() -> Dict[str, Any]:
         "metrics_summary": {
             "average_faithfulness_score": avg_f,
             "average_hallucination_score": avg_h,
-            "grounded_cases_accuracy": 1.0,
-            "hallucination_detection_recall": 1.0
+            "grounded_cases_accuracy": grounded_accuracy,
+            "grounded_cases_total": len(grounded_cases),
+            "grounded_cases_passed": grounded_passed_count,
+            "hallucination_detection_recall": hallucination_recall,
+            "adversarial_negative_controls_total": len(adversarial_cases),
+            "adversarial_negative_controls_detected": hallucination_detected_count,
+            "system_failures_count": len(system_failures),
+            "test_classification": {
+                "grounded_benchmark_cases": len(grounded_cases),
+                "adversarial_negative_controls": len(adversarial_cases)
+            }
         },
         "case_details": results
     }

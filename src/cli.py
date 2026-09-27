@@ -9,6 +9,7 @@ Usage:
 """
 
 import sys
+import os
 import argparse
 import json
 import uuid
@@ -16,6 +17,8 @@ import datetime
 import subprocess
 from typing import Dict, Any
 from dotenv import load_dotenv
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 load_dotenv()
 from src.graph import get_compiled_app, FNOLState
@@ -140,6 +143,12 @@ def run_batch_evaluation():
     
     print("--> Calculating Golden Signals metrics...")
     signals = calculate_golden_signals()
+    try:
+        from scripts.generate_dashboard_image import generate_dashboard_image
+        generate_dashboard_image()
+    except Exception as e:
+        print(f"[CLI] Dashboard image generation notice: {e}")
+        
     print("\nGolden Signals Summary:")
     print(f"  Total Spans:    {signals['total_spans']}")
     print(f"  Total Tokens:   {signals['total_tokens']}")

@@ -45,7 +45,16 @@ def get_gemini_client():
 
 import time
 
-def _record_llm_span(model: str, prompt: str, response: str, latency_ms: float, status: str = "OK"):
+def _record_llm_span(
+    model: str,
+    prompt: str,
+    response: str,
+    latency_ms: float,
+    status: str = "OK",
+    prompt_tokens: Optional[int] = None,
+    completion_tokens: Optional[int] = None,
+    total_tokens: Optional[int] = None
+):
     try:
         from src.observability.tracing import record_span
         record_span(
@@ -54,7 +63,10 @@ def _record_llm_span(model: str, prompt: str, response: str, latency_ms: float, 
             inputs={"model": model, "prompt": prompt},
             outputs={"response": response},
             latency_ms=latency_ms,
-            status=status
+            status=status,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            total_tokens=total_tokens
         )
     except Exception:
         pass
@@ -105,13 +117,22 @@ def invoke_gemini_with_fallback(
 
         latency_ms = max(1.0, (time.time() - t0) * 1000.0)
 
+        # Extract actual model token counts from Gemini response metadata
+        usage = getattr(response, "usage_metadata", None)
+        prompt_tokens = getattr(usage, "prompt_token_count", None) if usage else None
+        completion_tokens = getattr(usage, "candidates_token_count", None) if usage else None
+        total_tokens = getattr(usage, "total_token_count", None) if usage else None
+
         if response and response.text:
             _record_llm_span(
                 model=target_model,
                 prompt=clean_preview,
                 response=response.text[:200],
                 latency_ms=latency_ms,
-                status="OK"
+                status="OK",
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+                total_tokens=total_tokens
             )
             if response_schema:
                 data = json.loads(response.text)
@@ -126,7 +147,10 @@ def invoke_gemini_with_fallback(
                 prompt=clean_preview,
                 response="Empty response received",
                 latency_ms=latency_ms,
-                status="EMPTY"
+                status="EMPTY",
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+                total_tokens=total_tokens
             )
             print(f"[Gemini Engine] !!! Notice: Empty response from model '{target_model}'. Engaging fallback.")
             return None

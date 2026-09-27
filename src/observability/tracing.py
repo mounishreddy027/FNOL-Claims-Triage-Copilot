@@ -59,8 +59,18 @@ def setup_phoenix_tracing(project_name: str = "fnol-claims-triage", launch_ui: b
 from src.observability.audit import _sanitize_audit_obj
 
 
-def record_span(name: str, span_type: str, inputs: Dict[str, Any], outputs: Dict[str, Any], latency_ms: float, status: str = "OK"):
-    """Record an OpenTelemetry-compatible span for export with PII and raw narrative masking."""
+def record_span(
+    name: str,
+    span_type: str,
+    inputs: Dict[str, Any],
+    outputs: Dict[str, Any],
+    latency_ms: float,
+    status: str = "OK",
+    prompt_tokens: Optional[int] = None,
+    completion_tokens: Optional[int] = None,
+    total_tokens: Optional[int] = None
+):
+    """Record an OpenTelemetry-compatible span for export with actual model tokens and PII masking."""
     span_id = f"span_{len(_COLLECTED_SPANS) + 1:04d}_{int(datetime.datetime.now().timestamp() * 1000)}"
     run_id = f"run_fnol_{int(datetime.datetime.now().timestamp())}"
     
@@ -69,8 +79,21 @@ def record_span(name: str, span_type: str, inputs: Dict[str, Any], outputs: Dict
     inputs_str = json.dumps(clean_inputs)
     outputs_str = json.dumps(clean_outputs)
 
-    prompt_toks = max(len(inputs_str) // 4, 1)
-    comp_toks = max(len(outputs_str) // 4, 1)
+    # Use actual model token counts when provided; otherwise fallback to character ratio
+    if prompt_tokens is not None:
+        p_toks = int(prompt_tokens)
+    else:
+        p_toks = max(len(inputs_str) // 4, 1)
+
+    if completion_tokens is not None:
+        c_toks = int(completion_tokens)
+    else:
+        c_toks = max(len(outputs_str) // 4, 1)
+
+    if total_tokens is not None:
+        t_toks = int(total_tokens)
+    else:
+        t_toks = p_toks + c_toks
     
     span_record = {
         "span_id": span_id,
@@ -83,9 +106,9 @@ def record_span(name: str, span_type: str, inputs: Dict[str, Any], outputs: Dict
         "status": status,
         "inputs": inputs_str,
         "outputs": outputs_str,
-        "attributes.token_count.prompt": prompt_toks,
-        "attributes.token_count.completion": comp_toks,
-        "attributes.token_count.total": prompt_toks + comp_toks
+        "attributes.token_count.prompt": p_toks,
+        "attributes.token_count.completion": c_toks,
+        "attributes.token_count.total": t_toks
     }
     _COLLECTED_SPANS.append(span_record)
     return span_record

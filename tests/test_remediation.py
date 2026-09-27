@@ -296,3 +296,53 @@ def test_reported_evaluation_metrics_dynamic_derivation():
         assert kpi.get("total_spans_recorded") == signals["total_spans"]
         assert kpi.get("p50_latency_ms") == signals["latency_metrics"]["p50_latency_ms"]
         assert kpi.get("grounded_accuracy_score") == signals["accuracy_score"]
+
+
+def test_unmatched_policy_clause_escalates_to_human_without_defaulting_to_collision():
+    """Verify that claims with no relevant policy clause return NO_MATCH and route to human review instead of collision."""
+    from src.tools.rag_tool import PolicyRAGTool
+    
+    rag = PolicyRAGTool()
+    # Unmatched scenario completely outside policy coverage
+    res = rag.search_policy_coverage("Space asteroid orbital debris electromagnetic anomaly")
+    assert res["is_covered"] is False
+    assert res["primary_clause_id"] == "NO_MATCH"
+    assert "no relevant policy clause" in res["clause_citation"].lower()
+    
+    # Verify through routing decision node
+    state: FNOLState = {
+        "claim_id": "CLM-NOMATCH-001",
+        "claimant_id_masked": "CLM-***-US",
+        "policy_number_masked": "POL-***-US",
+        "raw_claim_text": "Space asteroid orbital debris electromagnetic anomaly",
+        "sanitized_text": "Space asteroid orbital debris electromagnetic anomaly",
+        "quarantined_text": None,
+        "is_quarantined": False,
+        "classification": {"claim_type": "Other", "severity": "Low", "estimated_damage": 1200.0},
+        "coverage_result": {
+            "is_covered": False,
+            "coverage_type": "Other",
+            "applied_clause_id": "NO_MATCH",
+            "clause_citation": "No matching policy terms or endorsement clauses identified.",
+            "deductible": 0.0,
+            "coverage_limit": 0.0,
+            "rationale": "No applicable coverage."
+        },
+        "fraud_risk": {"fraud_risk_score": 0.1, "risk_tier": "LOW", "triggered_indicators": [], "requires_siu_referral": False},
+        "audit_trail": [],
+        "errors": []
+    }
+    decision_out = routing_decision_node(state)
+    decision = decision_out["routing_decision"]
+    assert decision["routing_queue"] == "escalate_human"
+    assert decision["auto_approved"] is False
+    assert "NO_MATCH" in decision["escalation_reason"]
+
+
+def test_mcp_guidelines_resource_via_stdio_adapter():
+    """Verify that official triage guidelines resource is routed and retrieved via stdio MCP adapter."""
+    guidelines = LocalMCPClientAdapter.read_guidelines()
+    assert isinstance(guidelines, str)
+    assert len(guidelines) > 100
+    assert "Standard Claims Triage Guidelines" in guidelines
+    assert "Fast-Track Qualification" in guidelines

@@ -192,6 +192,7 @@ def supervisor_node(state: FNOLState) -> Dict[str, Any]:
             })
             routing_decision = {
                 "claim_id": state.get("claim_id", "UNKNOWN"),
+                "routing_queue": "escalate_human",
                 "recommended_queue": "ESCALATE_HUMAN",
                 "auto_approved": False,
                 "approval_rationale": "Automated triage halted by Security Threat Guardrail: violent threat or coercive pattern detected.",
@@ -333,6 +334,9 @@ def claim_classification_agent_node(state: FNOLState) -> Dict[str, Any]:
     Strictly consumes sanitized/quarantined text to prevent prompt injection execution.
     """
     t0 = time.perf_counter()
+    if any("threat" in str(e).lower() for e in state.get("errors", [])):
+        return {"current_step": "claim_classification", "errors": ["Worker execution prevented: claim blocked by threat guardrail."]}
+
     narrative = state.get("sanitized_text") or state.get("quarantined_text") or ""
     text_lower = narrative.lower()
     audit_events = list(state.get("audit_trail", []))
@@ -421,6 +425,9 @@ def coverage_check_agent_node(state: FNOLState) -> Dict[str, Any]:
     Strictly consumes sanitized/quarantined text to prevent prompt injection execution.
     """
     t0 = time.perf_counter()
+    if any("threat" in str(e).lower() for e in state.get("errors", [])):
+        return {"current_step": "coverage_check", "errors": ["Worker execution prevented: claim blocked by threat guardrail."]}
+
     audit_events = list(state.get("audit_trail", []))
     classification = state.get("classification") or {}
     claim_type = classification.get("claim_type", "Auto Collision")
@@ -428,21 +435,25 @@ def coverage_check_agent_node(state: FNOLState) -> Dict[str, Any]:
 
     # 1. MCP Tool: Lookup policy status and coverages
     policy_number = state.get("policy_number_masked", "POL-DEFAULT")
+    t_mcp0 = time.perf_counter()
     policy_details = LocalMCPClientAdapter.get_policy_details(policy_number)
+    mcp_duration_ms = (time.perf_counter() - t_mcp0) * 1000.0
 
     # 2. Agentic-RAG Tool: Search policy corpus for applicable clause and citation
     rag_tool = get_policy_rag_tool()
+    t_rag0 = time.perf_counter()
     rag_result = rag_tool.search_policy_coverage(query=narrative, agent="coverage_check_agent")
+    rag_duration_ms = (time.perf_counter() - t_rag0) * 1000.0
 
-    is_covered = rag_result.get("is_covered", True)
-    clause_id = rag_result.get("primary_clause_id", "POL-SEC-04-COLLISION")
+    is_covered = rag_result.get("is_covered", False)
+    clause_id = rag_result.get("primary_clause_id", "NO_MATCH")
     citation = rag_result.get("clause_citation", "")
-    deductible = rag_result.get("deductible", 500.0)
-    limit = rag_result.get("limit", 50000.0)
+    deductible = rag_result.get("deductible", 500.0) if is_covered else 0.0
+    limit = rag_result.get("limit", 50000.0) if is_covered else 0.0
 
     # 3. Attempt live Google Gemini LLM coverage analysis if active
     gemini_cov = None
-    if is_gemini_configured() and is_covered:
+    if is_gemini_configured() and is_covered and clause_id != "NO_MATCH":
         cov_prompt = (
             f"Sanitized Claim narrative: '{narrative}'\n"
             f"Retrieved Policy Clause: {clause_id}\n"
@@ -462,8 +473,8 @@ def coverage_check_agent_node(state: FNOLState) -> Dict[str, Any]:
         print(f"  [Agent: CoverageCheck] Generated via Live Gemini: Covered={result.is_covered}, Clause='{result.applied_clause_id}'")
     else:
         # Fallback to deterministic offline rules if Gemini is unavailable or not working
-        if not is_covered:
-            rationale = f"Incident violates policy exclusions under clause {clause_id}."
+        if not is_covered or clause_id == "NO_MATCH":
+            rationale = f"No applicable policy clause matches this loss scenario or incident violates policy exclusions ({clause_id})."
         else:
             rationale = f"Incident covered under {clause_id} (Deductible: ${deductible:,.2f}, Limit: ${limit:,.2f}) as verified in policy corpus."
 
@@ -476,9 +487,12 @@ def coverage_check_agent_node(state: FNOLState) -> Dict[str, Any]:
             coverage_limit=limit,
             rationale=rationale
         )
-        print(f"  [Agent: CoverageCheck] Generated via Deterministic Policy RAG: Covered={result.is_covered}, Clause='{result.applied_clause_id}'")
+        print(f"  [Agent: CoverageCheck] Generated via Policy RAG: Covered={result.is_covered}, Clause='{result.applied_clause_id}'")
 
-    latency_ms = max(0.5, (time.perf_counter() - t0) * 1000.0)
+    total_node_ms = max(0.5, (time.perf_counter() - t0) * 1000.0)
+    # Net agent thinking latency: subtract MCP tool and RAG execution time so MCP time is not counted twice
+    net_agent_latency_ms = max(0.5, total_node_ms - mcp_duration_ms - rag_duration_ms)
+
     audit_events.append({
         "actor": "coverage_check_agent",
         "action": "verify_coverage",
@@ -486,7 +500,7 @@ def coverage_check_agent_node(state: FNOLState) -> Dict[str, Any]:
         "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()
     })
     log_agent_action("coverage_check_agent", "verify_coverage", "PolicyRAGTool", result.model_dump())
-    record_span("coverage_check", "AGENT", {"policy": mask_identifier(policy_number)}, result.model_dump(), latency_ms)
+    record_span("coverage_check", "AGENT", {"policy": mask_identifier(policy_number)}, result.model_dump(), net_agent_latency_ms)
 
     return {
         "current_step": "coverage_check",
@@ -502,6 +516,9 @@ def fraud_indicator_agent_node(state: FNOLState) -> Dict[str, Any]:
     Strictly consumes sanitized/quarantined text and recalls cross-session claim history.
     """
     t0 = time.perf_counter()
+    if any("threat" in str(e).lower() for e in state.get("errors", [])):
+        return {"current_step": "fraud_indicator", "errors": ["Worker execution prevented: claim blocked by threat guardrail."]}
+
     audit_events = list(state.get("audit_trail", []))
     narrative = state.get("sanitized_text") or state.get("quarantined_text") or ""
     text_lower = narrative.lower()
@@ -513,17 +530,32 @@ def fraud_indicator_agent_node(state: FNOLState) -> Dict[str, Any]:
 
     # 1. Invoke Custom MCP Risk Calculator Tool with cross-session prior claims
     tenure = 1 if "immediately after purchase" in text_lower else 24
+    t_mcp0 = time.perf_counter()
     mcp_risk = LocalMCPClientAdapter.calculate_risk(
         damage_amount=damage_amount,
         incident_type=claim_type,
         tenure_months=tenure,
         prior_claims=prior_claims_count
     )
+    mcp_duration_ms = (time.perf_counter() - t_mcp0) * 1000.0
 
     risk_score = mcp_risk["claim_risk_score"]
     indicators = list(mcp_risk["contributing_factors"])
 
-    # 2. Screening indicator rules
+    # 2. LangMem Integration: Search claimant long-term memory for prior indicators
+    claimant_id = _resolve_claimant_id(state)
+    try:
+        mem_engine = SemanticTieredMemory()
+        langmem_tools = mem_engine.get_langmem_tools(claimant_id)
+        if langmem_tools:
+            search_tool = langmem_tools[0]
+            mem_search_res = search_tool.invoke({"query": "prior claims and fraud indicators"})
+            if mem_search_res and "prior" in str(mem_search_res).lower():
+                indicators.append("Prior claim context retrieved via LangMem search")
+    except Exception:
+        pass
+
+    # 3. Screening indicator rules
     if is_quarantined:
         risk_score += 0.50
         indicators.append("Adversarial Prompt Injection / Instruction Tampering Attempt")
@@ -570,7 +602,10 @@ def fraud_indicator_agent_node(state: FNOLState) -> Dict[str, Any]:
         rationale=rationale
     )
 
-    latency_ms = max(0.5, (time.perf_counter() - t0) * 1000.0)
+    total_node_ms = max(0.5, (time.perf_counter() - t0) * 1000.0)
+    # Net agent thinking latency: subtract MCP tool duration so MCP time is not counted twice
+    net_agent_latency_ms = max(0.5, total_node_ms - mcp_duration_ms)
+
     audit_events.append({
         "actor": "fraud_indicator_agent",
         "action": "screen_fraud",
@@ -578,7 +613,7 @@ def fraud_indicator_agent_node(state: FNOLState) -> Dict[str, Any]:
         "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()
     })
     log_agent_action("fraud_indicator_agent", "screen_fraud", "calculate_claim_risk_score", result.model_dump())
-    record_span("fraud_indicator", "AGENT", {"damage": damage_amount, "prior_claims": prior_claims_count}, result.model_dump(), latency_ms)
+    record_span("fraud_indicator", "AGENT", {"damage": damage_amount, "prior_claims": prior_claims_count}, result.model_dump(), net_agent_latency_ms)
 
     return {
         "current_step": "fraud_indicator",
@@ -619,11 +654,12 @@ def routing_decision_node(state: FNOLState) -> Dict[str, Any]:
         escalation_reason = "Adversarial prompt injection / security tampering attempt detected; routed to human investigator."
         rationale = "Claim narrative contained quarantined injection payloads. Automated auto-approval prohibited; routed to Human Review."
 
-    elif not is_covered:
+    elif not is_covered or coverage.get("applied_clause_id") == "NO_MATCH":
         queue = "escalate_human"
         auto_approved = False
-        escalation_reason = f"Coverage denial under clause {coverage.get('applied_clause_id', 'UNKNOWN')} requires licensed human adjuster review."
-        rationale = f"Claim denied based on policy terms: {coverage.get('rationale')}."
+        applied_clause = coverage.get("applied_clause_id", "NO_MATCH")
+        escalation_reason = f"Coverage denial or unmatched policy clause ({applied_clause}) requires licensed human adjuster review."
+        rationale = f"Uncovered loss or no matching policy terms cited ({applied_clause}). Escalated to Human Review."
 
     elif estimated_damage >= 25000.0 or severity in ["High", "Severe"]:
         queue = "escalate_human"
@@ -700,6 +736,10 @@ def routing_decision_node(state: FNOLState) -> Dict[str, Any]:
 
 def route_next_worker(state: FNOLState) -> str:
     """Conditional edge router reading supervisor's next_agent decision."""
+    # Threat-blocked claims stop immediately before any worker agents run
+    if any("threat" in str(e).lower() for e in state.get("errors", [])):
+        return END
+
     next_agent = state.get("next_agent", "end")
     if next_agent == "claim_classification":
         return "claim_classification"

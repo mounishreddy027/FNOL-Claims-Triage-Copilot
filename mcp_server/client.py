@@ -145,6 +145,47 @@ class StdioMCPClientAdapter:
             latency_ms = max(0.5, (time.time() - t0) * 1000.0)
             _record_mcp_span(tool_name, args, res or {}, latency_ms, status=status)
 
+    @classmethod
+    async def aread_resource(cls, uri: str = "policy://rules/standard_guidelines") -> str:
+        """Asynchronously read a resource over stdio from the MCP server."""
+        from pydantic import AnyUrl
+        params = cls.get_server_params()
+        try:
+            async with stdio_client(params) as (read, write):
+                async with ClientSession(read, write) as session:
+                    await session.initialize()
+                    res = await session.read_resource(AnyUrl(uri))
+                    if res.contents and len(res.contents) > 0:
+                        return res.contents[0].text
+                    return ""
+        except Exception as exc:
+            _log_mcp_error(f"resource_{uri}", {"uri": uri}, str(exc))
+            return direct_get_standard_guidelines()
+
+    @classmethod
+    def read_resource(cls, uri: str = "policy://rules/standard_guidelines") -> str:
+        """Synchronously read an MCP resource over stdio with timeout and error fallback."""
+        t0 = time.time()
+        try:
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = None
+
+            if loop and loop.is_running():
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                    future = executor.submit(lambda: asyncio.run(asyncio.wait_for(cls.aread_resource(uri), timeout=6.0)))
+                    return future.result(timeout=8.0)
+            else:
+                return asyncio.run(asyncio.wait_for(cls.aread_resource(uri), timeout=6.0))
+        except Exception as exc:
+            _log_mcp_error(f"resource_{uri}", {"uri": uri}, str(exc))
+            return direct_get_standard_guidelines()
+        finally:
+            latency_ms = max(0.5, (time.time() - t0) * 1000.0)
+            _record_mcp_span("read_guidelines_resource", {"uri": uri}, {"retrieved": True}, latency_ms, status="OK")
+
     @staticmethod
     def _fallback_direct_invoke(tool_name: str, args: Dict[str, Any], error_reason: str) -> Dict[str, Any]:
         """Fallback to in-process execution with error logging when stdio transport fails."""
@@ -178,7 +219,7 @@ class StdioMCPClientAdapter:
 
 
 class LocalMCPClientAdapter:
-    """Standardized MCP Client adapter consuming tools via langchain-mcp-adapters."""
+    """Standardized MCP Client adapter consuming tools and resources via langchain-mcp-adapters over stdio."""
 
     @staticmethod
     def get_policy_details(policy_number: str) -> Dict[str, Any]:
@@ -204,7 +245,7 @@ class LocalMCPClientAdapter:
         )
 
     @staticmethod
-    def read_guidelines() -> str:
-        """Read standard triage guidelines resource."""
-        return direct_get_standard_guidelines()
+    def read_guidelines(uri: str = "policy://rules/standard_guidelines") -> str:
+        """Read standard triage guidelines resource over the stdio MCP adapter."""
+        return StdioMCPClientAdapter.read_resource(uri)
 

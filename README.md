@@ -13,7 +13,7 @@ An enterprise multi-agent First Notice of Loss (FNOL) claims triage copilot buil
 
 ## 🚀 One-Command Execution (All-in-One Runbook)
 
-Execute the **entire project in a single command** — automatically runs all 61 pytest unit tests, executes the DeepEval LLM-as-judge benchmark, processes 4 benchmark claims scenarios through the multi-agent graph, exports OTel spans to Parquet/JSONL, and outputs the Golden Signals telemetry report:
+Execute the **entire project in a single command** — automatically runs all 63 pytest unit tests, executes the DeepEval LLM-as-judge benchmark, processes 4 benchmark claims scenarios through the multi-agent graph, exports OTel spans to Parquet/JSONL, and outputs the Golden Signals telemetry report & visual dashboard:
 
 ```bash
 python run.py
@@ -27,10 +27,10 @@ python run.py
 
 | Phase | Description | Command Executed | Output / Evidence |
 |:---:|:---|:---|:---|
-| **Phase 1** | **Automated Test Suite (61 Tests)** | `pytest -v tests/` | 61 unit tests pass across routing, loops, tool contracts, guardrails, context quarantine, and tracing |
+| **Phase 1** | **Automated Test Suite (63 Tests)** | `pytest -v tests/` | 63 unit tests pass across routing, loops, tool contracts, guardrails, LangMem memory, and tracing |
 | **Phase 2** | **DeepEval LLM-as-Judge Benchmark** | `python scripts/eval_deepeval.py` | Faithfulness & Hallucination evaluated with Gemini -> `reports/deepeval_benchmark.json` |
 | **Phase 3** | **Multi-Agent Batch Triage** | `python -m src.cli --mode batch` | 4 benchmark claims triaged with state checkpoints -> `data/checkpoints.sqlite` |
-| **Phase 4** | **Observability & Trace Export** | `python -m src.cli --mode traces` | Columnar spans in `traces/phoenix_spans.parquet`, JSONL, & `reports/golden_signals.json` |
+| **Phase 4** | **Observability, Traces & Dashboard** | `python -m src.cli --mode traces` | Columnar spans in `traces/phoenix_spans.parquet`, JSONL, `reports/golden_signals.json`, and `reports/dashboard.png` |
 
 ---
 
@@ -75,8 +75,8 @@ Runs tests, DeepEval benchmark, 4-scenario batch triage, and generates observabi
 python run.py
 ```
 
-### Option B: Run Automated Unit Tests (61 Passing Tests)
-Executes all unit tests across routing, recursion limits, tool contracts, guardrails, context quarantine, and observability:
+### Option B: Run Automated Unit Tests (63 Passing Tests)
+Executes all unit tests across routing, recursion limits, tool contracts, guardrails, LangMem memory, and observability:
 ```bash
 pytest -v tests/
 ```
@@ -214,7 +214,7 @@ fnol-claims-triage-copilot/
 │   ├── memory/                 # Tiered semantic memory & PII masking
 │   ├── observability/          # Phoenix tracing & audit logging
 │   └── tools/                  # FAISS / Lexical Agentic RAG tool
-├── tests/                      # 61 pytest unit tests
+├── tests/                      # 63 pytest unit tests
 └── traces/
     ├── phoenix_spans.parquet   # OTel spans in columnar format
     └── phoenix_spans.jsonl     # OTel spans in JSON Lines format

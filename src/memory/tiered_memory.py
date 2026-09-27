@@ -24,8 +24,11 @@ from pydantic import BaseModel, Field
 
 try:
     import langmem
+    from langgraph.store.memory import InMemoryStore
+    _LANGMEM_STORE = InMemoryStore()
     HAS_LANGMEM = True
 except ImportError:
+    _LANGMEM_STORE = None
     HAS_LANGMEM = False
 
 
@@ -152,6 +155,17 @@ class SemanticTieredMemory:
                 )
             )
             conn.commit()
+
+        # Synchronize with LangMem memory manager tool for live agent workflows
+        if HAS_LANGMEM:
+            try:
+                tools = self.get_langmem_tools(claimant_id)
+                if len(tools) >= 2:
+                    manage_tool = tools[1]
+                    manage_tool.invoke({"action": "create", "content": f"{key}: {value} | Category: {category}"})
+            except Exception:
+                pass
+
         return entry
 
     def recall_facts(
@@ -232,10 +246,12 @@ class SemanticTieredMemory:
             namespace = ("claimants", mask_identifier(claimant_id))
             search_tool = create_search_memory_tool(
                 namespace=namespace,
+                store=_LANGMEM_STORE,
                 instructions="Search claimant prior claims and factual history."
             )
             manage_tool = create_manage_memory_tool(
                 namespace=namespace,
+                store=_LANGMEM_STORE,
                 instructions="Update claimant memory facts and claim resolutions."
             )
             return [search_tool, manage_tool]
@@ -243,7 +259,14 @@ class SemanticTieredMemory:
             return []
 
     def clear(self):
-        """Purge memory table (useful for test isolation)."""
+        """Purge memory table and in-memory store (useful for test isolation)."""
+        global _LANGMEM_STORE
         with self._get_connection() as conn:
             conn.execute("DELETE FROM semantic_memories")
             conn.commit()
+        if HAS_LANGMEM:
+            try:
+                from langgraph.store.memory import InMemoryStore
+                _LANGMEM_STORE = InMemoryStore()
+            except Exception:
+                pass

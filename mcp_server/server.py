@@ -153,6 +153,7 @@ def calculate_claim_risk_score(
 
 
 @mcp.resource("policy://rules/standard_guidelines")
+@mcp.resource("triage://guidelines")
 def get_standard_guidelines() -> str:
     """Resource returning official Claims Triage and Fast-Track Rules."""
     return """

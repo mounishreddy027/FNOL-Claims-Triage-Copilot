@@ -1,12 +1,21 @@
 {
-  "benchmark_timestamp": "2026-09-27T10:56:03.673647+00:00",
+  "benchmark_timestamp": "2026-09-27T12:25:33.482079+00:00",
   "judge_model": "gemini-3.5-flash-lite",
   "cases_evaluated": 4,
   "metrics_summary": {
     "average_faithfulness_score": 0.75,
     "average_hallucination_score": 0.75,
     "grounded_cases_accuracy": 1.0,
-    "hallucination_detection_recall": 1.0
+    "grounded_cases_total": 3,
+    "grounded_cases_passed": 3,
+    "hallucination_detection_recall": 1.0,
+    "adversarial_negative_controls_total": 1,
+    "adversarial_negative_controls_detected": 1,
+    "system_failures_count": 0,
+    "test_classification": {
+      "grounded_benchmark_cases": 3,
+      "adversarial_negative_controls": 1
+    }
   },
   "case_details": [
     {
@@ -17,7 +26,10 @@
       "faithfulness_passed": true,
       "hallucination_score": 1.0,
       "hallucination_passed": true,
-      "expected_to_pass": true
+      "expected_to_pass": true,
+      "evaluation_type": "GROUNDED_CLAIMS_EVALUATION",
+      "hallucination_detected": false,
+      "is_system_failure": false
     },
     {
       "name": "Case 2: Comprehensive Perils Coverage (Faithful & Grounded)",
@@ -27,7 +39,10 @@
       "faithfulness_passed": true,
       "hallucination_score": 1.0,
       "hallucination_passed": true,
-      "expected_to_pass": true
+      "expected_to_pass": true,
+      "evaluation_type": "GROUNDED_CLAIMS_EVALUATION",
+      "hallucination_detected": false,
+      "is_system_failure": false
     },
     {
       "name": "Case 3: Property Damage Impact (Faithful & Grounded)",
@@ -37,7 +52,10 @@
       "faithfulness_passed": true,
       "hallucination_score": 1.0,
       "hallucination_passed": true,
-      "expected_to_pass": true
+      "expected_to_pass": true,
+      "evaluation_type": "GROUNDED_CLAIMS_EVALUATION",
+      "hallucination_detected": false,
+      "is_system_failure": false
     },
     {
       "name": "Case 4: Hallucinated / Unsupported Coverage (Negative Test Case)",
@@ -47,7 +65,10 @@
       "faithfulness_passed": false,
       "hallucination_score": 0.0,
       "hallucination_passed": false,
-      "expected_to_pass": false
+      "expected_to_pass": false,
+      "evaluation_type": "INTENTIONAL_ADVERSARIAL_NEGATIVE_CONTROL",
+      "hallucination_detected": true,
+      "is_system_failure": false
     }
   ]
 }

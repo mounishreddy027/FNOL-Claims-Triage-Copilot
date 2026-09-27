@@ -32,12 +32,12 @@ This analysis details the failure taxonomy, trigger conditions, severity, automa
 
 ### 3.1 Observed Failure 1: MCP Stdio Subprocess Transport Exception
 - **Telemetry Record:** `logs/mcp_errors.jsonl`
-- **Exact Record Timestamp:** `2026-09-27T09:53:36.814663+00:00`
-- **Tool Invocation Target:** `invalid_actuarial_tool` (and stdio process spawn timeouts under load)
+- **Exact Record Timestamp:** `2026-09-27T11:05:52.884302+00:00`
+- **Tool Invocation Target:** `invalid_actuarial_tool` (and stdio process spawn contention under high event loop loads)
 - **Observed Error Payload:**
   ```json
   {
-    "timestamp": "2026-09-27T09:53:36.814663+00:00",
+    "timestamp": "2026-09-27T11:05:52.884302+00:00",
     "tool_name": "invalid_actuarial_tool",
     "args": {"arg": "val"},
     "error": "unhandled errors in a TaskGroup (1 sub-exception)",
@@ -46,19 +46,19 @@ This analysis details the failure taxonomy, trigger conditions, severity, automa
   ```
 - **Root Cause:** FastMCP stdio client sessions using `anyio.TaskGroup` raise an unhandled sub-exception when a requested tool is not exposed by the MCP server schema or when stdio pipes encounter contention across fast thread transitions. If unhandled, this crash bubbles up and terminates the entire LangGraph workflow.
 - **Applied Fix & Code Reference:**
-  In [`mcp_server/client.py`](../mcp_server/client.py), wrapped `invoke_tool()` in an exception boundary that logs the error via `_log_mcp_error()` and invokes `_fallback_direct_invoke()`. This preserves service availability by routing to local actuarial calculations, annotating the response with `_adapter_notice`.
-- **Validation:** Tested via [`tests/test_remediation.py::test_mcp_tool_error_handling_and_logging`](../tests/test_remediation.py); verified error is recorded in `logs/mcp_errors.jsonl` and returns structured fallback without halting.
+  In [`mcp_server/client.py`](../mcp_server/client.py), wrapped `invoke_tool()` and `read_resource()` in exception boundaries that log the error via `_log_mcp_error()` and invoke `_fallback_direct_invoke()`. This preserves service availability by routing to local actuarial calculations, annotating the response with `_adapter_notice`.
+- **Validation:** Tested via [`tests/test_remediation.py::test_mcp_tool_error_handling`](../tests/test_remediation.py); verified error is recorded in `logs/mcp_errors.jsonl` and returns structured fallback without halting.
 
 ---
 
 ### 3.2 Observed Failure 2: Gemini API Quota Exhaustion (429 RESOURCE_EXHAUSTED)
-- **Telemetry Record:** Run ID `run_fnol_1790502928`, Span ID `span_0002_1790502953064`
-- **Location:** `src/llm.py` during `coverage_check` node invocation for scenario `CLM-2026-BENCH-01`
+- **Telemetry Record:** Run ID `run_fnol_1790507892`, Span ID `span_0001_1790507892017`
+- **Location:** `src/llm.py` during `claim_classification` node invocation for scenario `CLM-2026-BENCH-01`
 - **Observed Console Log & Span Trace:**
   ```text
-  [Gemini Engine] >>> CALLING MODEL: 'gemini-3.5-flash-lite' | Schema: CoverageCheckResult
+  [Gemini Engine] >>> CALLING MODEL: 'gemini-3.5-flash-lite' | Schema: ClaimClassificationResult
   [Gemini Engine] !!! Quota/Rate Limit (429 RESOURCE_EXHAUSTED): Free tier limit reached. Engaging deterministic fallback.
-  [Agent: CoverageCheck] Generated via Deterministic Policy RAG: Covered=True, Clause='POL-SEC-04-COLLISION'
+  [Agent: ClaimClassification] Generated via Deterministic Fallback: Auto Collision (Severity: Low, Loss: $1,800.00)
   ```
 - **Root Cause:** Successive rapid structured output calls during end-to-end batch evaluation exceeded the Google Gemini API free-tier token/request rate quota, causing the `google-genai` client to throw a `google.genai.errors.ClientError: 429 RESOURCE_EXHAUSTED`.
 - **Applied Fix & Code Reference:**
@@ -68,18 +68,18 @@ This analysis details the failure taxonomy, trigger conditions, severity, automa
 ---
 
 ### 3.3 Observed Failure 3: Adversarial Prompt Injection via Claimant Narrative
-- **Telemetry Record:** Run ID `run_fnol_1790502988`, Span ID `span_0015_1790502988955`
-- **Location:** `src/graph.py` during `supervisor_node` and `fraud_indicator` evaluation for scenario `CLM-2026-BENCH-04`
+- **Telemetry Record:** Run ID `run_fnol_1790507945`, Span ID `span_0036_1790507945537`
+- **Location:** `src/graph.py` during `supervisor_node` and `routing_decision` evaluation for scenario `CLM-2026-BENCH-04`
 - **Observed Span & Audit Payload:**
   ```json
   {
-    "span_id": "span_0015_1790502988955",
-    "name": "fraud_indicator",
+    "span_id": "span_0036_1790507945537",
+    "name": "routing_decision",
     "status": "OK",
     "outputs": {
-      "fraud_risk_score": 0.60,
-      "risk_tier": "MEDIUM",
-      "triggered_indicators": ["Adversarial Prompt Injection / Instruction Tampering Attempt"]
+      "routing_queue": "escalate_human",
+      "auto_approved": false,
+      "escalation_reason": "Adversarial prompt injection / security tampering attempt detected; routed to human investigator."
     }
   }
   ```
