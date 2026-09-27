@@ -1,0 +1,29 @@
+# Core Multi-Agent Framework
+langgraph>=0.2.0
+langgraph-checkpoint-sqlite>=2.0.0
+
+# LLM Provider (Exclusively Google Gemini API)
+google-genai>=2.0.0
+langchain-google-genai>=2.0.0
+
+# Model Context Protocol (MCP)
+fastmcp-slim>=4.0.0
+langchain-mcp-adapters>=0.1.0
+
+# Retrieval & Vector Store
+faiss-cpu>=1.8.0
+
+# Observability & Tracing
+arize-phoenix>=4.0.0
+openinference-instrumentation-langchain>=0.1.0
+pandas>=2.0.0
+pyarrow>=14.0.0
+
+# LLM Evaluation & Agent Testing
+deepeval>=4.0.0
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+
+# Security, Validation & Utilities
+pydantic>=2.0.0
+python-dotenv>=1.0.0

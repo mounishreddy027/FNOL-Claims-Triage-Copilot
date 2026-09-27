@@ -1,0 +1,53 @@
+{
+  "benchmark_timestamp": "2026-09-27T09:55:23.985623+00:00",
+  "judge_model": "gemini-3.5-flash-lite",
+  "cases_evaluated": 4,
+  "metrics_summary": {
+    "average_faithfulness_score": 0.75,
+    "average_hallucination_score": 0.75,
+    "grounded_cases_accuracy": 1.0,
+    "hallucination_detection_recall": 1.0
+  },
+  "case_details": [
+    {
+      "name": "Case 1: Standard Auto Collision Coverage (Faithful & Grounded)",
+      "input": "Car collided with concrete parking barrier at 10 mph. Front bumper dented.",
+      "actual_output": "Incident is covered under POL-SEC-04-COLLISION with $500.00 deductible and $50,000.00 limit as verified in policy corpus.",
+      "faithfulness_score": 1.0,
+      "faithfulness_passed": true,
+      "hallucination_score": 1.0,
+      "hallucination_passed": true,
+      "expected_to_pass": true
+    },
+    {
+      "name": "Case 2: Comprehensive Perils Coverage (Faithful & Grounded)",
+      "input": "Tree branch fell onto car hood during severe windstorm. Hood crushed.",
+      "actual_output": "Incident is covered under POL-SEC-06-COMPREHENSIVE with $250.00 deductible for falling object during windstorm.",
+      "faithfulness_score": 1.0,
+      "faithfulness_passed": true,
+      "hallucination_score": 1.0,
+      "hallucination_passed": true,
+      "expected_to_pass": true
+    },
+    {
+      "name": "Case 3: Property Damage Impact (Faithful & Grounded)",
+      "input": "Vehicle rolled into home perimeter fence and garage siding.",
+      "actual_output": "Incident is covered under POL-SEC-01-PROPERTY with $1,000.00 deductible for attached garage structure impact.",
+      "faithfulness_score": 1.0,
+      "faithfulness_passed": true,
+      "hallucination_score": 1.0,
+      "hallucination_passed": true,
+      "expected_to_pass": true
+    },
+    {
+      "name": "Case 4: Hallucinated / Unsupported Coverage (Negative Test Case)",
+      "input": "Vehicle engine blown while participating in illegal highway drag racing.",
+      "actual_output": "Incident is covered with zero deductible and special bonus payout for street racing performance enhancement.",
+      "faithfulness_score": 0.0,
+      "faithfulness_passed": false,
+      "hallucination_score": 0.0,
+      "hallucination_passed": false,
+      "expected_to_pass": false
+    }
+  ]
+}

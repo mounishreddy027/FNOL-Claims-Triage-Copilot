@@ -1,0 +1,16 @@
+{
+  "report_generated_at": "2026-09-27T09:56:29.005159+00:00",
+  "total_spans": 16,
+  "total_tokens": 1533,
+  "estimated_cost_usd": 0.000435,
+  "latency_metrics": {
+    "p50_latency_ms": 2580.7,
+    "p95_latency_ms": 10639.53,
+    "thinking_latency_p50_ms": 2580.7,
+    "acting_latency_p50_ms": 1548.42,
+    "tool_latency_p50_ms": 645.17
+  },
+  "success_rate": 1.0,
+  "accuracy_score": 1.0,
+  "hallucination_rate": 0.25
+}

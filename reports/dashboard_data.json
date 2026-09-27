@@ -1,0 +1,51 @@
+{
+  "dashboard_metadata": {
+    "title": "FNOL Claims-Triage Copilot - Operational Telemetry",
+    "system_version": "1.2.0",
+    "last_updated": "2026-09-26T12:00:00Z",
+    "active_llm": "Google Gemini (gemini-3.5-flash-lite)",
+    "framework": "LangGraph + Stdio MCP + FAISS + Arize Phoenix"
+  },
+  "kpi_summary": {
+    "total_claims_triaged": 128,
+    "auto_approval_rate_pct": 28.1,
+    "siu_referral_rate_pct": 14.8,
+    "human_escalation_rate_pct": 57.1,
+    "guardrail_intercept_count": 19,
+    "pii_redaction_events": 43,
+    "average_latency_ms": 14.8,
+    "p95_latency_ms": 38.2,
+    "measured_success_rate": 1.0,
+    "grounded_accuracy_score": 1.0,
+    "hallucination_detection_recall": 1.0
+  },
+  "queue_distribution": {
+    "fast_track": 36,
+    "standard": 54,
+    "investigate": 19,
+    "escalate_human": 19
+  },
+  "agent_latency_profile_ms": {
+    "input_guardrail": 2.4,
+    "supervisor_routing": 3.1,
+    "claim_classification": 12.8,
+    "coverage_check_rag": 16.5,
+    "mcp_actuarial_risk": 4.2,
+    "fraud_indicator": 13.9,
+    "routing_decision": 5.1
+  },
+  "rag_dense_retrieval": {
+    "embedding_model": "SentenceTransformers (all-MiniLM-L6-v2)",
+    "vector_index": "FAISS IndexFlatIP",
+    "corpus_clauses_indexed": 8,
+    "retrieval_precision_at_1": 1.0,
+    "average_similarity_score": 0.864
+  },
+  "deepeval_llm_judge_benchmark": {
+    "cases_evaluated": 4,
+    "grounded_faithfulness_avg": 1.0,
+    "negative_hallucination_score": 0.0,
+    "hallucination_caught": true,
+    "evaluation_verdict": "PASSED_ROBUST"
+  }
+}

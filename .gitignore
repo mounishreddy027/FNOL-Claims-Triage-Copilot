@@ -1,0 +1,39 @@
+# Environment variables (Explicitly excluded for secrets hygiene)
+.env
+.env.*
+!.env.example
+
+# Python cache & bytecode
+__pycache__/
+*.py[cod]
+*.class
+*.so
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local databases & checkpoints (ephemeral or non-committed)
+*.sqlite-journal
+data/test_*.sqlite
+data/test_*.db
+traces/test_*
+logs/*test*
+
+# IDE / Editor configuration
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
