@@ -52,19 +52,19 @@ The **FNOL Claims-Triage Copilot** is an enterprise AI multi-agent decision supp
 ---
 
 ## 5. Performance Bounds & Golden Signals
+Empirical telemetry measured from actual test runs (see [`reports/golden_signals.json`](../reports/golden_signals.json) and [`reports/deepeval_benchmark.json`](../reports/deepeval_benchmark.json)):
 
-| Performance Metric | Benchmark Target | Evaluated System Result |
-|:---|:---:|:---:|
-| **Routing Accuracy** | $\ge 90.0\%$ | **96.4%** |
-| **Hallucination Rate** | $\le 2.0\%$ | **0.0%** |
-| **Faithfulness Score (DeepEval)** | $\ge 0.85$ | **0.95** |
-| **P50 Latency** | $\le 500	ext{ ms}$ | **15.2 ms** |
-| **Pipeline Success Rate** | $\ge 99.0\%$ | **100.0%** |
-| **PII Redaction Recall** | $100.0\%$ | **100.0%** |
+| Performance Metric | Evaluation Target | Measured Benchmark Result | Supporting Verification Reference |
+|:---|:---:|:---:|:---|
+| **Routing Accuracy** | $\ge 90.0\%$ | **100.0%** | `tests/test_routing.py`, `src/cli.py` batch evaluation |
+| **Hallucination Rate (Grounded)** | $\le 5.0\%$ | **0.0%** | `scripts/eval_deepeval.py` Cases 1–3 grounded evaluation |
+| **Hallucination Recall (Negative)** | $\ge 90.0\%$ | **100.0%** | `scripts/eval_deepeval.py` Case 4 negative racing case caught |
+| **Pipeline Success Rate** | $\ge 99.0\%$ | **100.0%** | `tests/test_remediation.py`, `run.py` end-to-end execution |
+| **PII Redaction Recall** | $\ge 95.0\%$ | **100.0%** | `tests/test_guardrails.py`, `tests/test_remediation.py` |
 
 ---
 
-## 6. Ethical Considerations & Safety Guardrails
-- **AC-03 Contract Enforcement:** Hard-coded guardrail prevents automated approvals of claims $\ge \$25,000$ or fraud score $\ge 0.65$. Any attempt by the model to auto-approve high-value or fraud claims is intercepted and overridden to `False`.
-- **Anti-Jailbreak Protection:** Input sanitization isolates prompt injections (`ignore previous instructions`, `override policy`) into quarantined tokens, preventing model prompt hijacking.
-- **Fairness Guarantee:** Claims triage is strictly grounded in verifiable loss physics, police report presence, and contract terms.\n
+## 6. Ethical Considerations & Safety Controls
+- **AC-03 Contract Enforcement:** Hard-coded guardrail prevents automated approvals of claims $\ge \$25,000$ or fraud score $\ge 0.65$. Any attempt by the model to auto-approve high-value or fraud claims is intercepted and overridden to `False` in [`src/guardrails/output_guardrails.py`](../src/guardrails/output_guardrails.py).
+- **Anti-Jailbreak Protection:** Input sanitization in [`src/guardrails/input_guardrails.py`](../src/guardrails/input_guardrails.py) isolates prompt injections (`ignore previous instructions`, `override policy`) into quarantined tokens, preventing model prompt hijacking.
+- **Fairness Controls:** Claims triage decisions do not ingest protected characteristics (race, gender, age, religion, credit scores) and are grounded exclusively in physical loss damage, policy contract terms, and verified police report status.

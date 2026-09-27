@@ -88,6 +88,11 @@ def log_tool_invocation(agent: str, tool_name: str, args: Dict[str, Any], result
         f.write(json.dumps(record) + "\n")
 
 
+class RetrievalDependencyError(RuntimeError):
+    """Raised when dense vector dependencies are missing and strict retrieval is enforced."""
+    pass
+
+
 class PolicyRAGTool:
     """Agentic-RAG tool for insurance policy clauses using Sentence-Transformers + FAISS."""
 
@@ -105,7 +110,7 @@ class PolicyRAGTool:
             from sentence_transformers import SentenceTransformer
             self.encoder = SentenceTransformer("all-MiniLM-L6-v2")
         except Exception as e:
-            print(f"[PolicyRAGTool] Notice: SentenceTransformer init ({e}). Will use dense fallback.")
+            print(f"[PolicyRAGTool] Notice: SentenceTransformer init ({e}). Engaging deterministic lexical fallback.")
             self.encoder = None
 
     def _build_index(self):
@@ -166,19 +171,52 @@ class PolicyRAGTool:
             except Exception as e:
                 print(f"[PolicyRAGTool] Embedding encoding failed ({e}).")
 
-        # Robust lightweight fallback representation if encoder is offline
-        dim = 64
-        self.index = faiss.IndexFlatIP(dim)
-        fallback_vecs = np.random.randn(len(self.chunks), dim).astype(np.float32)
-        norms = np.linalg.norm(fallback_vecs, axis=1, keepdims=True)
-        fallback_vecs /= norms
-        self.index.add(fallback_vecs)
+        # Deterministic offline fallback: index is None, lexical search activates automatically
+        self.index = None
 
-    def search_policy_coverage(self, query: str, top_k: int = 3, agent: str = "coverage_check_agent") -> Dict[str, Any]:
+    def _deterministic_lexical_search(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
+        """Deterministic lexical retrieval fallback using keyword overlap and domain weighting."""
+        tokens = set(re.findall(r"\b[a-z0-9_-]{3,}\b", query.lower()))
+        if not tokens:
+            return []
+
+        scored = []
+        for chunk in self.chunks:
+            chunk_tokens = set(re.findall(r"\b[a-z0-9_-]{3,}\b", chunk["text"].lower()))
+            title_tokens = set(re.findall(r"\b[a-z0-9_-]{3,}\b", chunk["title"].lower()))
+            
+            body_overlap = len(tokens.intersection(chunk_tokens))
+            title_overlap = len(tokens.intersection(title_tokens))
+            boost = sum(BOOSTS.get(w, 0.0) for w in tokens if w in chunk_tokens or w in title_tokens)
+            score = (title_overlap * 3.0 + body_overlap + boost) / (len(tokens) + 1.0)
+            
+            if score > 0:
+                scored.append({
+                    "clause_id": chunk["clause_id"],
+                    "title": chunk["title"],
+                    "excerpt": chunk["text"][:300] + "...",
+                    "deductible": chunk["deductible"],
+                    "limit": chunk["limit"],
+                    "score": round(float(score), 4)
+                })
+
+        scored.sort(key=lambda x: x["score"], reverse=True)
+        return scored[:top_k]
+
+    def search_policy_coverage(
+        self,
+        query: str,
+        top_k: int = 3,
+        agent: str = "coverage_check_agent",
+        raise_on_missing_dependency: bool = False
+    ) -> Dict[str, Any]:
         """Search policy clauses relevant to the claim narrative and return citations."""
         start_time = time.time()
         
-        if not self.index or not self.chunks:
+        if raise_on_missing_dependency and self.encoder is None:
+            raise RetrievalDependencyError("Sentence-Transformers dense retrieval dependency is unavailable.")
+        
+        if not self.chunks:
             self._build_index()
 
         q_lower = query.lower()
@@ -206,6 +244,10 @@ class PolicyRAGTool:
                         })
             except Exception as e:
                 print(f"[PolicyRAGTool] Query search error ({e}).")
+
+        if not retrieved:
+            # Deterministic lexical retrieval fallback (BM25 term-overlap matching)
+            retrieved = self._deterministic_lexical_search(query, top_k=min(len(self.chunks), 5))
 
         # Exclusions gating strictly enforces AC-01 policy rules
         if is_exclusion_candidate:
@@ -250,6 +292,20 @@ class PolicyRAGTool:
 
         latency = (time.time() - start_time) * 1000
         log_tool_invocation(agent, "PolicyRAGTool.search_policy_coverage", {"query": query, "top_k": top_k}, result, latency)
+
+        try:
+            from src.observability.tracing import record_span
+            record_span(
+                name="rag_search_policy_coverage",
+                span_type="TOOL",
+                inputs={"query": query, "top_k": top_k},
+                outputs={"primary_clause_id": best["clause_id"], "is_covered": is_covered, "matches_count": len(retrieved)},
+                latency_ms=latency,
+                status="OK"
+            )
+        except Exception:
+            pass
+
         return result
 
 

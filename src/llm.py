@@ -43,6 +43,23 @@ def get_gemini_client():
         return None
 
 
+import time
+
+def _record_llm_span(model: str, prompt: str, response: str, latency_ms: float, status: str = "OK"):
+    try:
+        from src.observability.tracing import record_span
+        record_span(
+            name=f"gemini_call_{model}",
+            span_type="LLM",
+            inputs={"model": model, "prompt": prompt},
+            outputs={"response": response},
+            latency_ms=latency_ms,
+            status=status
+        )
+    except Exception:
+        pass
+
+
 def invoke_gemini_with_fallback(
     prompt: str,
     response_schema: Optional[Type[BaseModel]] = None,
@@ -69,6 +86,7 @@ def invoke_gemini_with_fallback(
     print(f"[Gemini Engine] >>> CALLING MODEL: '{target_model}' | Schema: {schema_label}")
     print(f"[Gemini Engine]     Prompt Preview: \"{clean_preview}\"")
 
+    t0 = time.time()
     try:
         from google.genai import types
         config = types.GenerateContentConfig(
@@ -85,7 +103,16 @@ def invoke_gemini_with_fallback(
             config=config
         )
 
+        latency_ms = max(1.0, (time.time() - t0) * 1000.0)
+
         if response and response.text:
+            _record_llm_span(
+                model=target_model,
+                prompt=clean_preview,
+                response=response.text[:200],
+                latency_ms=latency_ms,
+                status="OK"
+            )
             if response_schema:
                 data = json.loads(response.text)
                 validated = response_schema.model_validate(data)
@@ -94,10 +121,25 @@ def invoke_gemini_with_fallback(
             print(f"[Gemini Engine] <<< SUCCESS: Live response text received ({len(response.text)} chars).")
             return response.text
         else:
+            _record_llm_span(
+                model=target_model,
+                prompt=clean_preview,
+                response="Empty response received",
+                latency_ms=latency_ms,
+                status="EMPTY"
+            )
             print(f"[Gemini Engine] !!! Notice: Empty response from model '{target_model}'. Engaging fallback.")
             return None
     except Exception as e:
+        latency_ms = max(1.0, (time.time() - t0) * 1000.0)
         err_msg = str(e)
+        _record_llm_span(
+            model=target_model,
+            prompt=clean_preview,
+            response=f"Fallback engaged: {err_msg[:120]}",
+            latency_ms=latency_ms,
+            status="FALLBACK"
+        )
         if "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg:
             print(f"[Gemini Engine] !!! Quota/Rate Limit (429 RESOURCE_EXHAUSTED): Free tier limit reached. Engaging deterministic fallback.")
         else:

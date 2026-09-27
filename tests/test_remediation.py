@@ -193,3 +193,106 @@ def test_deepeval_negative_case_calibration():
     hm.measure(tc)
     assert hm.score < 0.7  # Must fail hallucination threshold
     assert hm.is_successful() is False
+
+
+def test_threat_guardrail_blocks_and_escalates_to_human():
+    """Verify that violent threats halt automated processing immediately and route to human review."""
+    violent_narrative = "Pay my $5,000 claim now or I will kill the adjuster and bomb the office!"
+    
+    state: FNOLState = {
+        "claim_id": "CLM-THREAT-001",
+        "claimant_id_masked": "CLM-***-001",
+        "policy_number_masked": "POL-***-001",
+        "raw_claim_text": violent_narrative,
+        "sanitized_text": "",
+        "quarantined_text": None,
+        "is_quarantined": False,
+        "incident_date": "2026-09-27",
+        "loss_location": "Chicago, IL",
+        "classification": None,
+        "coverage_result": None,
+        "fraud_risk": None,
+        "routing_decision": None,
+        "current_step": "init",
+        "next_agent": None,
+        "audit_trail": [],
+        "errors": []
+    }
+    
+    # Run supervisor node on threat input
+    sup_out = supervisor_node(state)
+    
+    # 1. Processing must be halted (next_agent is 'end', bypassing worker agents)
+    assert sup_out["next_agent"] == "end"
+    
+    # 2. Must be routed to human review (ESCALATE_HUMAN) with auto-approval disabled
+    assert "routing_decision" in sup_out
+    routing = sup_out["routing_decision"]
+    assert routing["recommended_queue"] == "ESCALATE_HUMAN"
+    assert routing["auto_approved"] is False
+    assert "threat" in routing["escalation_reason"].lower()
+    
+    # 3. Guardrail block error must be recorded
+    assert any("threat" in err.lower() for err in sup_out.get("errors", []))
+
+
+def test_missing_retrieval_dependencies_and_lexical_fallback():
+    """Verify PolicyRAGTool handles missing dense retrieval dependencies with deterministic lexical fallback."""
+    from src.tools.rag_tool import PolicyRAGTool, RetrievalDependencyError
+    
+    tool = PolicyRAGTool()
+    # Simulate missing sentence-transformers encoder
+    tool.encoder = None
+    tool.index = None
+    
+    # 1. Verify strict mode raises clear RetrievalDependencyError
+    with pytest.raises(RetrievalDependencyError):
+        tool.search_policy_coverage("Collision dent on bumper", raise_on_missing_dependency=True)
+        
+    # 2. Verify deterministic lexical fallback activates and retrieves relevant clause
+    res = tool.search_policy_coverage("Collision impact damaged front bumper and radiator")
+    assert res["is_covered"] is True
+    assert "POL-SEC-04-COLLISION" in res["primary_clause_id"]
+    assert len(res["retrieved_matches"]) > 0
+    # Ensure zero random numbers: lexical scoring is completely deterministic
+    assert all(m["score"] >= 0 for m in res["retrieved_matches"])
+
+
+def test_tool_failures_and_audit_logging():
+    """Verify that MCP tool errors are caught, logged to mcp_errors.jsonl, and do not crash the workflow."""
+    from mcp_server.client import StdioMCPClientAdapter, MCP_ERROR_LOG
+    
+    # Invoke invalid tool name
+    res = StdioMCPClientAdapter.invoke_tool("invalid_hypothetical_tool", {"param": "test_value"})
+    assert res.get("status") == "ERROR"
+    assert "failed" in res.get("error", "").lower()
+    
+    # Verify error is appended to MCP error log
+    assert os.path.exists(MCP_ERROR_LOG)
+    with open(MCP_ERROR_LOG, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+        assert len(lines) > 0
+        last_rec = json.loads(lines[-1])
+        assert "invalid" in last_rec.get("tool_name", "").lower()
+
+
+def test_reported_evaluation_metrics_dynamic_derivation():
+    """Verify that golden signals and dashboard data are generated dynamically from real run data."""
+    from src.observability.tracing import calculate_golden_signals
+    
+    signals = calculate_golden_signals()
+    assert "total_spans" in signals
+    assert "latency_metrics" in signals
+    assert "p50_latency_ms" in signals["latency_metrics"]
+    assert "accuracy_score" in signals
+    assert "hallucination_rate" in signals
+    
+    # Verify dashboard_data.json was also generated from the exact same run
+    dashboard_file = "reports/dashboard_data.json"
+    assert os.path.exists(dashboard_file)
+    with open(dashboard_file, "r", encoding="utf-8") as f:
+        dash_data = json.load(f)
+        kpi = dash_data.get("kpi_summary", {})
+        assert kpi.get("total_spans_recorded") == signals["total_spans"]
+        assert kpi.get("p50_latency_ms") == signals["latency_metrics"]["p50_latency_ms"]
+        assert kpi.get("grounded_accuracy_score") == signals["accuracy_score"]

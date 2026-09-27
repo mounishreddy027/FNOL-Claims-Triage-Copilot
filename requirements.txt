@@ -1,6 +1,7 @@
-# Core Multi-Agent Framework
+# Core Multi-Agent Framework & Memory
 langgraph>=0.2.0
 langgraph-checkpoint-sqlite>=2.0.0
+langmem>=0.0.30
 
 # LLM Provider (Exclusively Google Gemini API)
 google-genai>=2.0.0
@@ -11,6 +12,7 @@ fastmcp-slim>=4.0.0
 langchain-mcp-adapters>=0.1.0
 
 # Retrieval & Vector Store
+sentence-transformers>=2.2.0
 faiss-cpu>=1.8.0
 
 # Observability & Tracing

@@ -177,13 +177,48 @@ def supervisor_node(state: FNOLState) -> Dict[str, Any]:
     quarantined_text = state.get("quarantined_text")
     raw_text = state.get("raw_claim_text", "")
     sanitized_text = state.get("sanitized_text", "")
-
     if raw_text and not sanitized_text:
-        # Input Guardrail: Validate PII, injection attacks, and threats
         guard_in = validate_claim_input(raw_text)
         if guard_in.action == "BLOCK":
-            errors.append("Claim blocked by Input Guardrail: violent threat detected.")
+            errors.append("Claim blocked by Input Guardrail: violent threat or abusive coercion detected.")
             log_agent_action("input_guardrail", "block_threat", None, "BLOCKED", {"violations": guard_in.violations})
+            threat_reason = "Security Threat Guardrail: " + "; ".join(guard_in.violations)
+            audit_events.append({
+                "actor": "input_guardrail",
+                "action": "halt_processing_and_route_human",
+                "decision": "ESCALATE_HUMAN",
+                "reason": threat_reason,
+                "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()
+            })
+            routing_decision = {
+                "claim_id": state.get("claim_id", "UNKNOWN"),
+                "recommended_queue": "ESCALATE_HUMAN",
+                "auto_approved": False,
+                "approval_rationale": "Automated triage halted by Security Threat Guardrail: violent threat or coercive pattern detected.",
+                "escalation_reason": threat_reason,
+                "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()
+            }
+            try:
+                from src.observability.tracing import record_span
+                record_span(
+                    name="threat_guardrail_block",
+                    span_type="AGENT",
+                    inputs={"raw_claim_text": "[REDACTED_RAW_NARRATIVE]"},
+                    outputs={"routing_queue": "ESCALATE_HUMAN", "action": "BLOCK"},
+                    latency_ms=2.5,
+                    status="BLOCKED"
+                )
+            except Exception:
+                pass
+            return {
+                "sanitized_text": guard_in.sanitized_text,
+                "is_quarantined": True,
+                "quarantined_text": raw_text,
+                "routing_decision": routing_decision,
+                "next_agent": "end",
+                "errors": errors,
+                "audit_trail": audit_events
+            }
         elif guard_in.redacted_pii_count > 0:
             log_agent_action("input_guardrail", "sanitize_pii", None, f"Redacted {guard_in.redacted_pii_count} PII elements")
 
@@ -577,6 +612,12 @@ def routing_decision_node(state: FNOLState) -> Dict[str, Any]:
         auto_approved = False
         escalation_reason = f"Special Investigation Unit (SIU) referral triggered due to high fraud risk score ({fraud_score:.2f})."
         rationale = f"Claim flagged for fraud investigation. Indicators: {fraud.get('triggered_indicators', [])}."
+
+    elif state.get("is_quarantined") or any("injection" in str(ind).lower() for ind in fraud.get("triggered_indicators", [])):
+        queue = "escalate_human"
+        auto_approved = False
+        escalation_reason = "Adversarial prompt injection / security tampering attempt detected; routed to human investigator."
+        rationale = "Claim narrative contained quarantined injection payloads. Automated auto-approval prohibited; routed to Human Review."
 
     elif not is_covered:
         queue = "escalate_human"

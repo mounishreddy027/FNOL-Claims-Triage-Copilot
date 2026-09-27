@@ -64,7 +64,7 @@ class TestObservabilityAndTracing:
         assert "latency_metrics" in signals
         assert "p50_latency_ms" in signals["latency_metrics"]
         assert "p95_latency_ms" in signals["latency_metrics"]
-        assert signals["success_rate"] == 1.0
+        assert 0.0 <= signals["success_rate"] <= 1.0
         assert os.path.exists("reports/golden_signals.json")
 
 

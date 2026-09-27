@@ -167,19 +167,32 @@ def calculate_golden_signals() -> Dict[str, Any]:
         estimated_cost = 0.0
         total_span_count = 0
 
-    # Load evaluated accuracy and hallucination rate from DeepEval benchmark if present
-    accuracy_score = 1.0
+    # Calculate evaluated accuracy and hallucination metrics directly from DeepEval benchmark details
+    accuracy_score = measured_success_rate
     hallucination_rate = 0.0
+    hallucination_recall = 1.0
+    cases_evaluated = 0
     benchmark_file = "reports/deepeval_benchmark.json"
     if os.path.exists(benchmark_file):
         try:
             with open(benchmark_file, "r", encoding="utf-8") as f:
                 bdata = json.load(f)
-                summary_metrics = bdata.get("metrics_summary", {})
-                accuracy_score = float(summary_metrics.get("grounded_cases_accuracy", 1.0))
-                # For grounded cases, hallucination is detected vs ground-truth
-                avg_f = float(summary_metrics.get("average_faithfulness_score", 1.0))
-                hallucination_rate = max(0.0, round(1.0 - avg_f, 3))
+                cases = bdata.get("case_details", [])
+                if cases:
+                    cases_evaluated = len(cases)
+                    grounded_cases = [c for c in cases if c.get("expected_to_pass", True)]
+                    negative_cases = [c for c in cases if not c.get("expected_to_pass", True)]
+
+                    correct_evals = sum(1 for c in grounded_cases if c.get("faithfulness_passed", False)) + \
+                                    sum(1 for c in negative_cases if not c.get("faithfulness_passed", True))
+                    accuracy_score = round(correct_evals / float(cases_evaluated), 4)
+
+                    detected_hallucinations = sum(1 for c in negative_cases if not c.get("hallucination_passed", True))
+                    hallucination_recall = round(detected_hallucinations / max(1.0, float(len(negative_cases))), 4)
+                    
+                    # Hallucination rate across all evaluated cases
+                    hallucinations_present = sum(1 for c in cases if not c.get("hallucination_passed", True))
+                    hallucination_rate = round(hallucinations_present / float(cases_evaluated), 4)
         except Exception:
             pass
 
@@ -200,9 +213,54 @@ def calculate_golden_signals() -> Dict[str, Any]:
         "hallucination_rate": hallucination_rate
     }
 
+    # Generate unified dashboard telemetry payload from the same real run
+    dashboard_payload = {
+        "dashboard_metadata": {
+            "title": "FNOL Claims-Triage Copilot - Operational Telemetry",
+            "system_version": "1.2.0",
+            "last_updated": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "active_llm": os.environ.get("GEMINI_MODEL_NAME", "Google Gemini (gemini-3.5-flash-lite)"),
+            "framework": "LangGraph + Stdio MCP + FAISS + Arize Phoenix"
+        },
+        "kpi_summary": {
+            "total_spans_recorded": total_span_count,
+            "total_tokens_consumed": total_tokens,
+            "estimated_cost_usd": estimated_cost,
+            "p50_latency_ms": p50,
+            "p95_latency_ms": p95,
+            "measured_success_rate": measured_success_rate,
+            "grounded_accuracy_score": accuracy_score,
+            "hallucination_rate": hallucination_rate,
+            "hallucination_detection_recall": hallucination_recall
+        },
+        "agent_latency_profile_ms": {
+            "overall_p50": p50,
+            "overall_p95": p95,
+            "agent_thinking_p50": agent_p50,
+            "tool_execution_p50": tool_p50,
+            "llm_generation_p50": llm_p50
+        },
+        "rag_dense_retrieval": {
+            "embedding_model": "SentenceTransformers (all-MiniLM-L6-v2)",
+            "vector_index": "FAISS IndexFlatIP",
+            "corpus_clauses_indexed": 8,
+            "dense_search_status": "ONLINE"
+        },
+        "deepeval_llm_judge_benchmark": {
+            "cases_evaluated": cases_evaluated,
+            "measured_accuracy": accuracy_score,
+            "hallucination_detection_recall": hallucination_recall,
+            "evaluation_verdict": "PASSED_ROBUST" if accuracy_score >= 0.75 else "FAILED"
+        }
+    }
+
     os.makedirs("reports", exist_ok=True)
     with open("reports/golden_signals.json", "w", encoding="utf-8") as f:
         json.dump(signals, f, indent=2)
+
+    with open("reports/dashboard_data.json", "w", encoding="utf-8") as f:
+        json.dump(dashboard_payload, f, indent=2)
+
     return signals
 
 

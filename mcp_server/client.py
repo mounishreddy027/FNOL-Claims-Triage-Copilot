@@ -47,6 +47,21 @@ def _log_mcp_error(tool_name: str, args: Dict[str, Any], error: str):
         f.write(json.dumps(record) + "\n")
 
 
+def _record_mcp_span(tool_name: str, args: Dict[str, Any], result: Dict[str, Any], latency_ms: float, status: str = "OK"):
+    try:
+        from src.observability.tracing import record_span
+        record_span(
+            name=f"mcp_tool_{tool_name}",
+            span_type="TOOL",
+            inputs={"tool_name": tool_name, "args": args},
+            outputs=result,
+            latency_ms=latency_ms,
+            status=status
+        )
+    except Exception:
+        pass
+
+
 class StdioMCPClientAdapter:
     """Manages MCP tool execution over stdio connection via langchain-mcp-adapters."""
 
@@ -99,6 +114,9 @@ class StdioMCPClientAdapter:
     @classmethod
     def invoke_tool(cls, tool_name: str, args: Dict[str, Any]) -> Dict[str, Any]:
         """Synchronously execute a tool via stdio langchain-mcp-adapters with error handling."""
+        t0 = time.time()
+        res = None
+        status = "OK"
         try:
             try:
                 loop = asyncio.get_running_loop()
@@ -108,13 +126,24 @@ class StdioMCPClientAdapter:
             if loop and loop.is_running():
                 import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-                    future = executor.submit(lambda: asyncio.run(cls.ainvoke_tool(tool_name, args)))
-                    return future.result(timeout=10.0)
+                    future = executor.submit(lambda: asyncio.run(asyncio.wait_for(cls.ainvoke_tool(tool_name, args), timeout=6.0)))
+                    res = future.result(timeout=8.0)
             else:
-                return asyncio.run(cls.ainvoke_tool(tool_name, args))
+                async def _timed_call():
+                    return await asyncio.wait_for(cls.ainvoke_tool(tool_name, args), timeout=6.0)
+                res = asyncio.run(_timed_call())
+
+            if isinstance(res, dict) and res.get("status") == "ERROR":
+                status = "ERROR"
+            return res
         except Exception as exc:
+            status = "ERROR"
             _log_mcp_error(tool_name, args, str(exc))
-            return cls._fallback_direct_invoke(tool_name, args, str(exc))
+            res = cls._fallback_direct_invoke(tool_name, args, str(exc))
+            return res
+        finally:
+            latency_ms = max(0.5, (time.time() - t0) * 1000.0)
+            _record_mcp_span(tool_name, args, res or {}, latency_ms, status=status)
 
     @staticmethod
     def _fallback_direct_invoke(tool_name: str, args: Dict[str, Any], error_reason: str) -> Dict[str, Any]:
