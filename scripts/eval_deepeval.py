@@ -219,6 +219,9 @@ def run_deepeval_benchmark() -> Dict[str, Any]:
     avg_f = round(total_faithfulness / n, 3)
     avg_h = round(total_hallucination / n, 3)
 
+    system_hallucinations = [c for c in grounded_cases if not c["hallucination_passed"]]
+    system_hallucination_rate = round(len(system_hallucinations) / len(grounded_cases), 4) if grounded_cases else 0.0
+
     summary = {
         "benchmark_timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "judge_model": judge.get_model_name(),
@@ -227,15 +230,22 @@ def run_deepeval_benchmark() -> Dict[str, Any]:
             "average_faithfulness_score": avg_f,
             "average_hallucination_score": avg_h,
             "grounded_cases_accuracy": grounded_accuracy,
+            "system_hallucination_rate": system_hallucination_rate,
             "grounded_cases_total": len(grounded_cases),
             "grounded_cases_passed": grounded_passed_count,
             "hallucination_detection_recall": hallucination_recall,
+            "negative_control_detection_recall": hallucination_recall,
             "adversarial_negative_controls_total": len(adversarial_cases),
             "adversarial_negative_controls_detected": hallucination_detected_count,
             "system_failures_count": len(system_failures),
             "test_classification": {
                 "grounded_benchmark_cases": len(grounded_cases),
                 "adversarial_negative_controls": len(adversarial_cases)
+            },
+            "metric_definitions": {
+                "grounded_cases_accuracy": "Percentage of legitimate claims verified as faithful and grounded (target: 100%).",
+                "system_hallucination_rate": "Percentage of legitimate claims producing ungrounded statements (target: 0.0%).",
+                "negative_control_detection_recall": "Ability of DeepEval judge to detect and reject intentional adversarial claims (target: 100%)."
             }
         },
         "case_details": results

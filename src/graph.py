@@ -269,7 +269,8 @@ def supervisor_node(state: FNOLState) -> Dict[str, Any]:
                     f"Recalled {prior_claims_count} prior claims for claimant {claimant_id}",
                     {"claimant": claimant_id, "count": prior_claims_count}
                 )
-        except Exception:
+        except Exception as e:
+            errors.append(f"Memory recall error for claimant {claimant_id}: {str(e)}")
             claimant_profile = {"claimant_id_masked": mask_identifier(claimant_id), "prior_claims": []}
             if prior_claims_count is None:
                 prior_claims_count = 0
@@ -429,6 +430,7 @@ def coverage_check_agent_node(state: FNOLState) -> Dict[str, Any]:
         return {"current_step": "coverage_check", "errors": ["Worker execution prevented: claim blocked by threat guardrail."]}
 
     audit_events = list(state.get("audit_trail", []))
+    errors = list(state.get("errors", []))
     classification = state.get("classification") or {}
     claim_type = classification.get("claim_type", "Auto Collision")
     narrative = state.get("sanitized_text") or state.get("quarantined_text") or ""
@@ -438,6 +440,8 @@ def coverage_check_agent_node(state: FNOLState) -> Dict[str, Any]:
     t_mcp0 = time.perf_counter()
     policy_details = LocalMCPClientAdapter.get_policy_details(policy_number)
     mcp_duration_ms = (time.perf_counter() - t_mcp0) * 1000.0
+    if isinstance(policy_details, dict) and policy_details.get("status") == "ERROR":
+        errors.append(f"Policy details lookup error: {policy_details.get('error', 'Unknown MCP error')}")
 
     # 2. Agentic-RAG Tool: Search policy corpus for applicable clause and citation
     rag_tool = get_policy_rag_tool()
@@ -505,7 +509,8 @@ def coverage_check_agent_node(state: FNOLState) -> Dict[str, Any]:
     return {
         "current_step": "coverage_check",
         "coverage_result": result.model_dump(),
-        "audit_trail": audit_events
+        "audit_trail": audit_events,
+        "errors": errors
     }
 
 
@@ -520,6 +525,7 @@ def fraud_indicator_agent_node(state: FNOLState) -> Dict[str, Any]:
         return {"current_step": "fraud_indicator", "errors": ["Worker execution prevented: claim blocked by threat guardrail."]}
 
     audit_events = list(state.get("audit_trail", []))
+    errors = list(state.get("errors", []))
     narrative = state.get("sanitized_text") or state.get("quarantined_text") or ""
     text_lower = narrative.lower()
     is_quarantined = state.get("is_quarantined", False)
@@ -538,6 +544,8 @@ def fraud_indicator_agent_node(state: FNOLState) -> Dict[str, Any]:
         prior_claims=prior_claims_count
     )
     mcp_duration_ms = (time.perf_counter() - t_mcp0) * 1000.0
+    if isinstance(mcp_risk, dict) and mcp_risk.get("status") == "ERROR":
+        errors.append(f"Fraud risk calculation error: {mcp_risk.get('error', 'Unknown MCP error')}")
 
     risk_score = mcp_risk["claim_risk_score"]
     indicators = list(mcp_risk["contributing_factors"])
@@ -552,8 +560,8 @@ def fraud_indicator_agent_node(state: FNOLState) -> Dict[str, Any]:
             mem_search_res = search_tool.invoke({"query": "prior claims and fraud indicators"})
             if mem_search_res and "prior" in str(mem_search_res).lower():
                 indicators.append("Prior claim context retrieved via LangMem search")
-    except Exception:
-        pass
+    except Exception as e:
+        errors.append(f"LangMem recall notice: {str(e)}")
 
     # 3. Screening indicator rules
     if is_quarantined:
@@ -618,7 +626,8 @@ def fraud_indicator_agent_node(state: FNOLState) -> Dict[str, Any]:
     return {
         "current_step": "fraud_indicator",
         "fraud_risk": result.model_dump(),
-        "audit_trail": audit_events
+        "audit_trail": audit_events,
+        "errors": errors
     }
 
 
@@ -642,7 +651,16 @@ def routing_decision_node(state: FNOLState) -> Dict[str, Any]:
     requires_siu = fraud.get("requires_siu_referral", False)
 
     # Decision Matrix adhering strictly to AC-03
-    if requires_siu or fraud_score >= 0.65:
+    system_errors = list(state.get("errors", []))
+    critical_errors = [e for e in system_errors if "error" in str(e).lower() or "threat" in str(e).lower() or "fail" in str(e).lower()]
+
+    if critical_errors:
+        queue = "escalate_human"
+        auto_approved = False
+        escalation_reason = f"System tool or memory error detected during evaluation: {', '.join(critical_errors)}. Manual human review required."
+        rationale = "Claim could not be safely automated due to execution errors. Escalated to Human Review."
+
+    elif requires_siu or fraud_score >= 0.65:
         queue = "investigate"
         auto_approved = False
         escalation_reason = f"Special Investigation Unit (SIU) referral triggered due to high fraud risk score ({fraud_score:.2f})."
@@ -710,8 +728,9 @@ def routing_decision_node(state: FNOLState) -> Dict[str, Any]:
                 "clause_id": coverage.get("applied_clause_id", "")
             }
         )
-    except Exception:
-        pass
+    except Exception as e:
+        system_errors.append(f"Memory persistence error: {str(e)}")
+        log_agent_action("routing_decision", "memory_persistence_error", "SemanticTieredMemory", str(e))
 
     latency_ms = max(0.5, (time.perf_counter() - t0) * 1000.0)
     audit_events.append({
@@ -726,7 +745,8 @@ def routing_decision_node(state: FNOLState) -> Dict[str, Any]:
     return {
         "current_step": "routing_decision",
         "routing_decision": result.model_dump(),
-        "audit_trail": audit_events
+        "audit_trail": audit_events,
+        "errors": system_errors
     }
 
 

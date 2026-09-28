@@ -31,10 +31,12 @@ INJECTION_PATTERNS = [
 
 # Toxic / threat keywords
 THREAT_PATTERNS = [
-    r"\bkill\s+(you|the\s+adjuster|everyone)\b",
-    r"\bbomb\s+(the\s+office|building)\b",
+    r"\bkill\s+(you|the\s+adjuster|everyone|somebody|someone|people)\b",
+    r"\b(i\s+will|i'll)\s+(kill|murder|shoot|harm|destroy)\b",
+    r"\b(bomb|blow\s+up|burn\s+down)\b",
     r"\bi\s+will\s+destroy\b",
-    r"\bpay\s+me\s+or\s+else\b"
+    r"\bpay\s+(me\s+)?(now\s+)?or\s+else\b",
+    r"\bphysical\s+violence\b"
 ]
 
 

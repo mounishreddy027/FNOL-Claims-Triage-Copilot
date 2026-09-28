@@ -22,12 +22,12 @@ This document establishes the risk taxonomy, gating controls, and automated guar
 ## 2. Consequential Risk Taxonomy
 
 ### Risk 1: Erroneous Auto-Approval of High-Value or Fraudulent Losses
-- **Description:** A severe loss (> $25,000) or suspicious claim being marked `auto_approved = True` without adjuster review.
+- **Description:** A severe loss (> $25,000), suspicious claim, or compromised session being marked `auto_approved = True` without adjuster review.
 - **Consequence:** Immediate financial leakage, fraudulent indemnity payouts, and reinsurance audit failures.
 - **Mitigation Control (AC-03):** 
   Hard mathematical boundary enforced at both the node logic and Output Guardrail layer (`validate_triage_output`):
   ```python
-  if estimated_damage > 25000.0 or fraud_risk_score >= 0.65 or is_quarantined:
+  if estimated_damage > 25000.0 or fraud_risk_score >= 0.65 or is_quarantined or state.get("errors"):
       auto_approved = False  # Strictly mandatory override
   ```
 
@@ -50,6 +50,13 @@ This document establishes the risk taxonomy, gating controls, and automated guar
 - **Consequence:** Discrimination litigation, civil rights violations, and state regulatory disapproval.
 - **Mitigation Control:**
   Risk calculation is isolated in the deterministic MCP server (`calculate_claim_risk_score`), based strictly on transparent objective factors: damage amount, loss type, policyholder tenure, and prior loss frequency. Demographic attributes are excluded from graph state.
+
+### Risk 5: Silent Tool / Memory Failure Inducing Blind Auto-Approval
+- **Description:** MCP server timeout, tool invocation failure, or SQLite memory corruption silently failing without setting risk flags, resulting in default fast-track approval.
+- **Consequence:** Substandard claims bypass security and actuarial screening undetected.
+- **Mitigation Control:**
+  Fail-closed defense: Any exception in MCP tool execution (`lookup_policy_details`, `calculate_claim_risk_score`) or memory recall/commit appends to `state["errors"]`. The `routing_decision_node` explicitly inspects `state["errors"]`; if any errors are present, `auto_approved` is unconditionally forced to `False` and routing is directed to `escalate_human`.
+  Furthermore, physical violent threats (`action == "BLOCK"`) halt graph execution immediately before any worker agents run.
 
 ---
 

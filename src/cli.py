@@ -34,6 +34,10 @@ def run_claim_triage(
     thread_id: str = None
 ) -> Dict[str, Any]:
     """Execute a single claim through the LangGraph triage pipeline."""
+    from src.observability.tracing import set_current_trace_id
+    claim_trace_id = format(uuid.uuid4().int, "032x")
+    set_current_trace_id(claim_trace_id)
+
     app, checkpointer = get_compiled_app()
     thread_id = thread_id or f"thread-{uuid.uuid4().hex[:8]}"
 
@@ -100,6 +104,11 @@ def print_claim_summary(result: Dict[str, Any]):
 
 def run_batch_evaluation():
     """Run 4 diverse benchmark claims to demonstrate end-to-end routing."""
+    from src.tools.rag_tool import get_policy_rag_tool
+    from src.observability.tracing import clear_collected_spans
+    get_policy_rag_tool()
+    clear_collected_spans()
+
     scenarios = [
         {
             "id": "CLM-2026-BENCH-01",

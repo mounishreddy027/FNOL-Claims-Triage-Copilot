@@ -346,3 +346,104 @@ def test_mcp_guidelines_resource_via_stdio_adapter():
     assert len(guidelines) > 100
     assert "Standard Claims Triage Guidelines" in guidelines
     assert "Fast-Track Qualification" in guidelines
+
+
+def test_authentic_opentelemetry_spans_and_zero_synthetic_fallbacks(tmp_path):
+    """Verify exported spans have 16-hex span_id, 32-hex trace_id, and zero synthetic fallback rows."""
+    from src.observability.tracing import clear_collected_spans, record_span, export_spans, _COLLECTED_SPANS
+    import pandas as pd
+
+    # 1. When clear, export produces empty dataframe with zero synthetic fallback rows
+    clear_collected_spans()
+    empty_parquet = str(tmp_path / "empty_spans.parquet")
+    empty_jsonl = str(tmp_path / "empty_spans.jsonl")
+    df_empty = export_spans(parquet_path=empty_parquet, jsonl_path=empty_jsonl)
+    assert len(df_empty) == 0
+    assert "span_0001_initial" not in df_empty.get("span_id", pd.Series()).values
+
+    # 2. Recorded span contains authentic 16-hex span_id and 32-hex run_id
+    span = record_span(
+        name="authentic_otel_test",
+        span_type="LLM",
+        inputs={"prompt": "evaluate claim"},
+        outputs={"verdict": "ok"},
+        latency_ms=12.4,
+        status="OK",
+        prompt_tokens=42,
+        completion_tokens=18,
+        total_tokens=60
+    )
+    assert len(span["span_id"]) == 16
+    int(span["span_id"], 16)  # Must be valid hex
+    assert len(span["run_id"]) == 32
+    int(span["run_id"], 16)   # Must be valid 32-hex trace ID
+    assert span["attributes.token_count.total"] == 60
+
+
+def test_tool_and_memory_error_paths_prevent_auto_approval():
+    """Verify that tool or memory errors are not silently swallowed and strictly prevent auto-approval."""
+    state_with_error: FNOLState = {
+        "claim_id": "CLM-ERR-001",
+        "claimant_id_masked": "CLM-***-US",
+        "policy_number_masked": "POL-***-US",
+        "raw_claim_text": "Minor scratch on bumper.",
+        "sanitized_text": "Minor scratch on bumper.",
+        "quarantined_text": None,
+        "is_quarantined": False,
+        "classification": {"claim_type": "Auto Collision", "severity": "Low", "estimated_damage": 800.0},
+        "coverage_result": {"is_covered": True, "applied_clause_id": "POL-SEC-04-COLLISION"},
+        "fraud_risk": {"fraud_risk_score": 0.05, "requires_siu_referral": False},
+        "audit_trail": [],
+        "errors": ["Policy details lookup error: MCP stdio transport connection reset"]
+    }
+    
+    # Despite low damage ($800) and low fraud score (0.05), error prevents fast-track auto-approval
+    decision_out = routing_decision_node(state_with_error)
+    decision = decision_out["routing_decision"]
+    assert decision["auto_approved"] is False
+    assert decision["routing_queue"] == "escalate_human"
+    assert "MCP stdio transport connection reset" in decision["escalation_reason"]
+    assert len(decision_out["errors"]) > 0
+
+
+def test_threat_block_halts_execution_before_worker_agents():
+    """Verify that violent threats halt the graph lifecycle before worker agents are invoked."""
+    app, checkpointer = get_compiled_app()
+    threat_text = "I demand $20,000 immediately or I will blow up your regional claim headquarters!"
+    
+    initial_state: FNOLState = {
+        "claim_id": "CLM-THREAT-E2E-001",
+        "claimant_id_masked": "CLM-***-US",
+        "policy_number_masked": "POL-***-US",
+        "raw_claim_text": threat_text,
+        "sanitized_text": "",
+        "quarantined_text": None,
+        "is_quarantined": False,
+        "incident_date": "2026-09-28",
+        "loss_location": "Houston, TX",
+        "classification": None,
+        "coverage_result": None,
+        "fraud_risk": None,
+        "routing_decision": None,
+        "current_step": "init",
+        "next_agent": None,
+        "audit_trail": [],
+        "errors": [],
+        "claimant_profile": None,
+        "prior_claims_count": 0,
+        "recalled_memories": []
+    }
+    
+    final_state = app.invoke(initial_state, config={"configurable": {"thread_id": "thread-threat-test"}})
+    
+    # 1. Routing decision must be ESCALATE_HUMAN and auto_approved False
+    assert final_state["routing_decision"] is not None
+    assert final_state["routing_decision"]["recommended_queue"] == "ESCALATE_HUMAN"
+    assert final_state["routing_decision"]["auto_approved"] is False
+    assert "threat" in final_state["routing_decision"]["escalation_reason"].lower()
+    
+    # 2. Worker nodes must NEVER have executed (remain None)
+    assert final_state["classification"] is None
+    assert final_state["coverage_result"] is None
+    assert final_state["fraud_risk"] is None
+

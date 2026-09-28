@@ -15,6 +15,8 @@ def generate_dashboard_image(
     dashboard_data_path: str = "reports/dashboard_data.json",
     output_png_path: str = "reports/dashboard.png"
 ):
+    dashboard_data_path = os.path.abspath(dashboard_data_path)
+    output_png_path = os.path.abspath(output_png_path)
     if not os.path.exists(dashboard_data_path):
         print(f"[DashboardGen] {dashboard_data_path} not found. Skipping image generation.")
         return
@@ -52,7 +54,7 @@ def generate_dashboard_image(
     ax_kpi.text(0.08, 0.70, f"Total Spans: {kpi.get('total_spans_recorded', 0)}", fontsize=10, color="#cbd5e1")
     ax_kpi.text(0.08, 0.54, f"Tokens Consumed: {kpi.get('total_tokens_consumed', 0):,}", fontsize=10, color="#cbd5e1")
     ax_kpi.text(0.08, 0.38, f"Estimated Cost: ${kpi.get('estimated_cost_usd', 0.0):.6f}", fontsize=10, color="#34d399")
-    ax_kpi.text(0.08, 0.22, f"Success Rate: {kpi.get('measured_success_rate', 1.0) * 100:.1f}%", fontsize=10, color="#38bdf8")
+    ax_kpi.text(0.08, 0.22, f"Op. Success Rate: {kpi.get('operational_success_rate', kpi.get('measured_success_rate', 1.0)) * 100:.1f}%", fontsize=10, color="#38bdf8")
     ax_kpi.text(0.08, 0.06, f"Grounded Accuracy: {kpi.get('grounded_accuracy_score', 1.0) * 100:.1f}%", fontsize=10, color="#a78bfa")
 
     # 3. Latency Distribution (Top Center)
@@ -77,11 +79,12 @@ def generate_dashboard_image(
     # 4. DeepEval Benchmark (Top Right)
     ax_eval = fig.add_subplot(gs[0, 2])
     ax_eval.set_facecolor("#1e293b")
-    eval_names = ["Grounded Acc", "Halluc Recall", "Pass Rate"]
+    eval_names = ["Grounded Acc", "Halluc Recall", "Sys Faithful"]
+    sys_faithful = (1.0 - kpi.get("system_hallucination_rate", kpi.get("hallucination_rate", 0.0))) * 100
     eval_scores = [
         kpi.get("grounded_accuracy_score", 1.0) * 100,
         kpi.get("hallucination_detection_recall", 1.0) * 100,
-        kpi.get("measured_success_rate", 1.0) * 100
+        sys_faithful
     ]
     eval_bars = ax_eval.barh(eval_names, eval_scores, color=["#10b981", "#6366f1", "#0ea5e9"], height=0.45)
     ax_eval.set_xlim(0, 115)
