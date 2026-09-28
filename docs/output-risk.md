@@ -60,6 +60,92 @@ This document establishes the risk taxonomy, gating controls, and automated guar
 
 ---
 
+## 2.1 Consequential Output Tiers, Gating Controls & Concrete Samples
+
+The system categorizes all prospective triage outputs into three distinct risk tiers:
+
+### Tier 1: Low-Risk Output Tier (Automated Fast-Track Settlement)
+- **Scope & Thresholds:** Estimated damage $\le \$5,000.00$, low severity, fraud risk score $< 0.25$, verified policy coverage clause, zero PII/injection violations, and zero system errors.
+- **Gating Mechanism:** Auto-approval permitted (`auto_approved = True`). Dispatches to digital payout engine.
+- **Concrete Sample Payload:**
+  ```json
+  {
+    "claim_id": "CLM-2026-001",
+    "routing_queue": "fast-track",
+    "auto_approved": true,
+    "claim_type": "Auto Collision",
+    "severity": "Low",
+    "estimated_damage": 1800.0,
+    "applied_clause_id": "POL-SEC-04-COLLISION",
+    "deductible": 500.0,
+    "fraud_risk_score": 0.10,
+    "risk_tier": "LOW",
+    "escalation_reason": null,
+    "rationale": "Low-severity, low-damage claim with clear coverage and low fraud risk approved for instant digital settlement."
+  }
+  ```
+
+### Tier 2: Medium-Risk Output Tier (Standard Claims Adjuster Assignment)
+- **Scope & Thresholds:** Estimated damage between $\$5,000.00$ and $\$24,999.00$, moderate severity, fraud risk between $0.25$ and $0.64$.
+- **Gating Mechanism:** Human-in-the-loop review mandatory (`auto_approved = False`). Assigned to field claims adjuster.
+- **Concrete Sample Payload:**
+  ```json
+  {
+    "claim_id": "CLM-2026-002",
+    "routing_queue": "standard",
+    "auto_approved": false,
+    "claim_type": "Auto Collision",
+    "severity": "Medium",
+    "estimated_damage": 7500.0,
+    "applied_clause_id": "POL-SEC-04-COLLISION",
+    "deductible": 500.0,
+    "fraud_risk_score": 0.35,
+    "risk_tier": "MEDIUM",
+    "escalation_reason": "Standard adjuster queue for moderate damage claim processing.",
+    "rationale": "Moderate claim meets coverage criteria and proceeds to standard adjuster assignment."
+  }
+  ```
+
+### Tier 3: High-Risk Output Tier (Mandatory Human Escalation / SIU / Refusal)
+- **Scope & Thresholds:** Any claim exceeding $\$25,000.00$, severe structural loss, fraud risk $\ge 0.65$, SIU indicators, quarantined prompt injection, violent threat, policy exclusion violation, out-of-scope inquiry, or system tool error.
+- **Gating Mechanism:** Strict Gating Refusal (`auto_approved = False`). Hard-coded override in [`src/guardrails/output_guardrails.py`](../src/guardrails/output_guardrails.py) and routing logic intercepts and prevents any automated settlement, routing directly to `investigate` (SIU) or `escalate_human`.
+- **Concrete Sample Payload (High-Value Loss):**
+  ```json
+  {
+    "claim_id": "CLM-2026-003",
+    "routing_queue": "escalate_human",
+    "auto_approved": false,
+    "claim_type": "Auto Collision",
+    "severity": "Severe",
+    "estimated_damage": 32000.0,
+    "applied_clause_id": "POL-SEC-04-COLLISION",
+    "deductible": 500.0,
+    "fraud_risk_score": 0.45,
+    "risk_tier": "MEDIUM",
+    "escalation_reason": "High-value claim threshold exceeded ($32,000.00) or severe loss tier.",
+    "rationale": "Claims exceeding $25,000 or severe damage are escalated to Senior Claims Adjuster."
+  }
+  ```
+- **Concrete Sample Payload (Prompt Injection / Security Refusal):**
+  ```json
+  {
+    "claim_id": "CLM-2026-004",
+    "routing_queue": "escalate_human",
+    "auto_approved": false,
+    "claim_type": "Auto Collision",
+    "severity": "Low",
+    "estimated_damage": 3500.0,
+    "applied_clause_id": "POL-SEC-06-COMPREHENSIVE",
+    "deductible": 250.0,
+    "fraud_risk_score": 0.60,
+    "risk_tier": "MEDIUM",
+    "escalation_reason": "Adversarial prompt injection / security tampering attempt detected; routed to human investigator.",
+    "rationale": "Claim narrative contained quarantined injection payloads. Automated auto-approval prohibited; routed to Human Review."
+  }
+  ```
+
+---
+
 ## 3. Defense-in-Depth Control Architecture
 
 ```

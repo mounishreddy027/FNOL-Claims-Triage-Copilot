@@ -47,12 +47,12 @@ The **FNOL Claims-Triage Copilot** is an enterprise AI multi-agent decision supp
 ## 4. Training, Corpora & Grounding
 - **Policy Corpus:** 5 synthetic policy contracts covering collision (`POL-SEC-04-COLLISION`), comprehensive perils (`POL-SEC-06-COMPREHENSIVE`), property damage (`POL-SEC-01-PROPERTY`), exclusions (`POL-EXCL-08-COMMERCIAL_RACING`), and fraud protocols (`POL-SIU-02-FRAUD_SCREENING`).
 - **Retrieval Engine:** FAISS vector store indexing policy clauses with exact deductible, limit, and condition metadata.
-- **Data Privacy:** Synthetic data exclusively. All real PII is masked or redacted before reaching model context.
+- **Data Privacy:** Synthetic data exclusively. Deterministic regex-based Presidio-aligned PII masking scrubs SSNs, payment cards, and telephone numbers before reaching model context; policy and claimant IDs are masked.
 
 ---
 
 ## 5. Performance Bounds & Golden Signals
-Empirical telemetry measured from actual test runs (see [`reports/golden_signals.json`](../reports/golden_signals.json) and [`reports/deepeval_benchmark.json`](../reports/deepeval_benchmark.json)):
+Empirical telemetry measured from actual test runs (see [`reports/golden_signals.json`](../reports/golden_signals.json) and [`reports/eval_report.json`](../reports/eval_report.json)):
 
 | Performance Metric | Evaluation Target | Measured Benchmark Result | Supporting Verification Reference |
 |:---|:---:|:---:|:---|

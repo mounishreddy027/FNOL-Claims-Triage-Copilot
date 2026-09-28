@@ -2,29 +2,29 @@
   "dashboard_metadata": {
     "title": "FNOL Claims-Triage Copilot - Operational Telemetry",
     "system_version": "1.2.0",
-    "last_updated": "2026-09-28T05:21:39.831294+00:00",
+    "last_updated": "2026-09-28T06:33:48.676834+00:00",
     "active_llm": "gemini-3.5-flash-lite",
     "framework": "LangGraph + Stdio MCP + FAISS + Arize Phoenix"
   },
   "kpi_summary": {
-    "total_spans_recorded": 41,
-    "total_tokens_consumed": 3118,
-    "estimated_cost_usd": 0.000747,
-    "p50_latency_ms": 461.77,
-    "p95_latency_ms": 3297.13,
-    "operational_success_rate": 0.9512,
-    "measured_success_rate": 0.9512,
+    "total_spans_recorded": 36,
+    "total_tokens_consumed": 3282,
+    "estimated_cost_usd": 0.000812,
+    "p50_latency_ms": 872.5,
+    "p95_latency_ms": 3016.61,
+    "operational_success_rate": 1.0,
+    "measured_success_rate": 1.0,
     "grounded_accuracy_score": 1.0,
     "system_hallucination_rate": 0.0,
     "hallucination_rate": 0.0,
     "hallucination_detection_recall": 1.0
   },
   "agent_latency_profile_ms": {
-    "overall_p50": 461.77,
-    "overall_p95": 3297.13,
-    "agent_thinking_p50": 25.81,
-    "tool_execution_p50": 3065.53,
-    "llm_generation_p50": 455.6
+    "overall_p50": 872.5,
+    "overall_p95": 3016.61,
+    "agent_thinking_p50": 551.02,
+    "tool_execution_p50": 2393.94,
+    "llm_generation_p50": 574.37
   },
   "rag_dense_retrieval": {
     "embedding_model": "SentenceTransformers (all-MiniLM-L6-v2)",
@@ -33,7 +33,7 @@
     "dense_search_status": "ONLINE"
   },
   "deepeval_llm_judge_benchmark": {
-    "cases_evaluated": 4,
+    "cases_evaluated": 9,
     "measured_accuracy": 1.0,
     "hallucination_detection_recall": 1.0,
     "system_failures_count": 0,

@@ -35,7 +35,8 @@ def run_claim_triage(
 ) -> Dict[str, Any]:
     """Execute a single claim through the LangGraph triage pipeline."""
     from src.observability.tracing import set_current_trace_id
-    claim_trace_id = format(uuid.uuid4().int, "032x")
+    # Deterministic 32-hex trace ID derived from claim_id for reproducible telemetry
+    claim_trace_id = uuid.uuid5(uuid.NAMESPACE_DNS, f"fnol-claim-{claim_id}").hex
     set_current_trace_id(claim_trace_id)
 
     app, checkpointer = get_compiled_app()
@@ -152,11 +153,6 @@ def run_batch_evaluation():
     
     print("--> Calculating Golden Signals metrics...")
     signals = calculate_golden_signals()
-    try:
-        from scripts.generate_dashboard_image import generate_dashboard_image
-        generate_dashboard_image()
-    except Exception as e:
-        print(f"[CLI] Dashboard image generation notice: {e}")
         
     print("\nGolden Signals Summary:")
     print(f"  Total Spans:    {signals['total_spans']}")
@@ -185,7 +181,7 @@ def main():
 
     if args.mode == "all":
         print("\n" + "=" * 70)
-        print(" [PHASE 1/3] EXECUTING AUTOMATED TEST SUITE (PYTEST)")
+        print(" [PHASE 1/3] EXECUTING AUTOMATED TEST SUITE (72 PYTEST UNIT TESTS)")
         print("=" * 70)
         res_pytest = subprocess.run([sys.executable, "-m", "pytest", "-v", "tests/"])
         if res_pytest.returncode != 0:

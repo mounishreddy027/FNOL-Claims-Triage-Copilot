@@ -42,8 +42,24 @@
 - **Explainability & Transparency:** Every routing decision outputs a detailed legal/contractual rationale citing exact section identifiers (e.g. `POL-SEC-04-COLLISION`, `POL-SEC-06-COMPREHENSIVE`) and verbatim policy terms.
 
 ### B. Gramm-Leach-Bliley Act (GLBA) & State Financial Privacy
-- **Safeguards Rule Compliance:** Sensitive financial details, payment card numbers, and Social Security Numbers are redacted before entering agent context.
+- **Safeguards Rule Alignment:** Sensitive financial details, payment card numbers, and Social Security Numbers are redacted before entering agent context via deterministic regex pattern masking (`[REDACTED_SSN]`, `[REDACTED_CC]`).
 - **Data Minimization:** Policy numbers and claimant identifiers are masked into non-identifying tokens (`POL-***-CA`, `CLM-***-US`) across all persistent logs and telemetry spans.
 
-### C. SOC 2 Type II Audit Logging (Security & Availability)
-- **Immutable Consequential Action Trail:** Every consequential agent decision (coverage determination, fraud flag, triage routing, guardrail intervention) is recorded to `logs/agent_actions.jsonl` with `{actor, action, tool, decision, timestamp}`.\n
+### C. SOC 2 Trust Services Criteria Alignment (Security & Availability)
+- **Immutable Consequential Action Trail:** Every consequential agent decision (coverage determination, fraud flag, triage routing, guardrail intervention) is recorded to `logs/agent_actions.jsonl` with `{actor, action, tool, decision, timestamp}`.
+
+---
+
+## 4. International Regulatory Obligations Matrix (EU AI Act / NIST AI RMF / DPDP)
+
+| Regulatory Framework | Mandatory Obligation | Technical Implementation Control | Committed Evidence Artifact |
+|:---|:---|:---|:---|
+| **EU AI Act (High-Risk AI Systems)** | Article 14: Human Oversight & Intervention | Automated approval prohibited for losses > $25k, fraud score $\ge 0.65$, prompt injection, or system errors; unconditionally routes to `escalate_human`. | [`src/guardrails/output_guardrails.py`](../src/guardrails/output_guardrails.py), [`docs/output-risk.md`](output-risk.md) |
+| **EU AI Act (High-Risk AI Systems)** | Article 13: Transparency & Traceability | OpenTelemetry span export with genuine 32-hex trace IDs and 16-hex span IDs capturing all model, tool, and agent steps. | [`traces/phoenix_spans.parquet`](../traces/phoenix_spans.parquet), [`traces/phoenix_spans.jsonl`](../traces/phoenix_spans.jsonl) |
+| **EU AI Act (High-Risk AI Systems)** | Article 15: Accuracy, Robustness & Cybersecurity | Regex-based quarantine filter isolates adversarial prompt injections; input guardrail halts violent threats. | [`src/guardrails/input_guardrails.py`](../src/guardrails/input_guardrails.py), [`tests/test_guardrails.py`](../tests/test_guardrails.py) |
+| **NIST AI RMF 1.0** | **GOVERN 1.1:** AI Risk Management Policies | Formal risk register with OWASP LLM and NIST threat classifications, likelihood, impact, and mitigation controls. | [`docs/risk-register.md`](risk-register.md) |
+| **NIST AI RMF 1.0** | **MAP 1.5:** Context & Limitation Definition | Explicit model card specifying intended domain, limitations, out-of-scope usages, and known failure modes. | [`docs/model-card.md`](model-card.md) |
+| **NIST AI RMF 1.0** | **MEASURE 2.2:** Continuous Evaluation & Benchmarking | DeepEval LLM-as-judge evaluation measuring grounded cases accuracy, system hallucination rate, and negative-control recall. | [`reports/eval_report.json`](../reports/eval_report.json), [`reports/golden_signals.json`](../reports/golden_signals.json) |
+| **NIST AI RMF 1.0** | **MANAGE 2.4:** Fail-Safe Incident Response | Dual-engine fallback: graceful degradation to deterministic policy rules and local FAISS RAG upon API 429 quota exhaustion. | [`src/llm.py`](../src/llm.py), [`docs/failure-analysis.md`](failure-analysis.md) |
+| **DPDP Act 2023** | Section 4: Lawful Processing & Data Minimization | Regex-based Presidio-aligned PII masking strips SSNs, credit cards, and telephone numbers before agent reasoning. | [`src/guardrails/input_guardrails.py`](../src/guardrails/input_guardrails.py), [`tests/test_guardrails.py`](../tests/test_guardrails.py) |
+| **DPDP Act 2023** | Section 8: Personal Data Security Safeguards | Masked policy numbers (`POL-***-CA`) and masked claimant IDs in all logs, database checkpoints, and telemetry. | [`src/memory/tiered_memory.py`](../src/memory/tiered_memory.py), [`logs/agent_actions.jsonl`](../logs/agent_actions.jsonl) |\n

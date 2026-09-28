@@ -1,0 +1,16 @@
+metric_name,metric_value,unit
+total_spans_recorded,36.0,count
+total_tokens_consumed,3282.0,tokens
+prompt_tokens,766.0,tokens
+completion_tokens,2516.0,tokens
+estimated_cost_usd,0.000812,USD
+p50_latency_ms,872.5,ms
+p95_latency_ms,3016.61,ms
+agent_thinking_p50_ms,551.02,ms
+tool_execution_p50_ms,2393.94,ms
+llm_generation_p50_ms,574.37,ms
+operational_success_rate,1.0,ratio
+strict_unassisted_success_rate,0.7778,ratio
+grounded_accuracy_score,1.0,score
+system_hallucination_rate,0.0,rate
+negative_control_detection_recall,1.0,recall

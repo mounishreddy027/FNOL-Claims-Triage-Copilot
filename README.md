@@ -13,7 +13,7 @@ An enterprise multi-agent First Notice of Loss (FNOL) claims triage copilot buil
 
 ## 🚀 One-Command Execution (All-in-One Runbook)
 
-Execute the **entire project in a single command** — automatically runs all 66 pytest unit tests, executes the DeepEval LLM-as-judge benchmark, processes 4 benchmark claims scenarios through the multi-agent graph, exports authentic OTel spans to Parquet/JSONL, and outputs the Golden Signals telemetry report & visual dashboard:
+Execute the **entire project in a single command** — automatically runs all 72 pytest unit tests, executes the DeepEval LLM-as-judge benchmark, processes 4 benchmark claims scenarios through the multi-agent graph, exports authentic OTel spans to Parquet/JSONL, and outputs the Golden Signals telemetry report & visual dashboard:
 
 ```bash
 python run.py
@@ -27,10 +27,10 @@ python run.py
 
 | Phase | Description | Command Executed | Output / Evidence |
 |:---:|:---|:---|:---|
-| **Phase 1** | **Automated Test Suite (66 Tests)** | `pytest -v tests/` | 66 unit tests pass across routing, loops, tool contracts, guardrails, LangMem memory, threat blocks, and authentic OTel spans |
-| **Phase 2** | **DeepEval LLM-as-Judge Benchmark** | `python scripts/eval_deepeval.py` | Grounded Accuracy & Hallucination evaluated with Gemini -> `reports/deepeval_benchmark.json` |
+| **Phase 1** | **Automated Test Suite (72 Tests)** | `pytest -v tests/` | 72 unit tests pass across routing, loops, tool contracts, guardrails, LangMem memory, threat blocks, citation resolution, API streaming, and authentic OTel spans |
+| **Phase 2** | **DeepEval LLM-as-Judge Benchmark** | `python scripts/eval_deepeval.py` | 9 balanced benchmark scenarios evaluated with Gemini judge -> `reports/eval_report.json` & `reports/deepeval_benchmark.json` |
 | **Phase 3** | **Multi-Agent Batch Triage** | `python -m src.cli --mode batch` | 4 benchmark claims triaged with state checkpoints -> `data/checkpoints.sqlite` |
-| **Phase 4** | **Observability, Traces & Dashboard** | `python -m src.cli --mode traces` | Columnar spans in `traces/phoenix_spans.parquet`, JSONL, `reports/golden_signals.json`, and `reports/dashboard.png` |
+| **Phase 4** | **Observability, Traces & Dashboard** | `python -m src.cli --mode traces` | Columnar spans in `traces/phoenix_spans.parquet`, JSONL, `reports/golden_signals.json`, `reports/dashboard_data.csv`, and `reports/dashboard.png` |
 
 ---
 
@@ -75,14 +75,14 @@ Runs tests, DeepEval benchmark, 4-scenario batch triage, and generates observabi
 python run.py
 ```
 
-### Option B: Run Automated Unit Tests (66 Passing Tests)
-Executes all 66 unit tests across routing, recursion limits, tool contracts, guardrails, LangMem memory, threat blocks, and authentic OTel spans:
+### Option B: Run Automated Unit Tests (72 Passing Tests)
+Executes all 72 unit tests across routing, recursion limits, tool contracts, guardrails, LangMem memory, threat blocks, citation resolution, API streaming, and authentic OTel spans:
 ```bash
 pytest -v tests/
 ```
 
 ### Option C: Run DeepEval LLM-as-Judge Benchmark
-Measures Faithfulness and Hallucination metrics against policy citations using Gemini:
+Measures Faithfulness and Hallucination metrics against policy citations using Gemini across 9 balanced benchmark scenarios:
 ```bash
 python scripts/eval_deepeval.py
 ```
@@ -109,6 +109,12 @@ python -m src.cli --mode traces
 Launch the Model Context Protocol stdio server independently:
 ```bash
 python -m mcp_server.server
+```
+
+### Option H: Launch FastAPI REST & Streaming Server (Bonus / Extra Credit)
+Start the async FastAPI service with `/triage/stream` SSE live lifecycle events:
+```bash
+python -m uvicorn src.api.main:app --port 8000
 ```
 
 ---
@@ -170,9 +176,12 @@ graph TD
 | **Adversarial Quarantine** | `src/context/quarantine.py` | `tests/test_context_engineering.py` |
 | **Security Guardrails (AC-03)** | `src/guardrails/` | `tests/test_guardrails.py` |
 | **Phoenix Tracing & Spans** | `src/observability/tracing.py` | `tests/test_observability.py`, `tests/test_remediation.py` |
-| **DeepEval LLM-as-Judge** | `scripts/eval_deepeval.py` | `tests/test_evaluation_deepeval.py` |
-| **Tiered Semantic Memory** | `src/memory/tiered_memory.py` | `tests/test_memory_persistence.py` |
+| **DeepEval LLM-as-Judge** | `scripts/eval_deepeval.py` | `tests/test_evaluation_deepeval.py`, `tests/test_remediation.py` |
+| **Tiered Semantic Memory** | `src/memory/tiered_memory.py` | `tests/test_memory_persistence.py`, `tests/test_remediation.py` |
 | **Fail-Closed Safety & Threat Blocks** | `src/graph.py`, `src/guardrails/` | `tests/test_remediation.py` |
+| **Intent Handling & Safe Routing (AC-04)** | `src/graph.py` | `tests/test_remediation.py` |
+| **Evidence Citation Verification** | `docs/failure-analysis.md` | `tests/test_citation_resolution.py` |
+| **FastAPI Real-Time SSE Streaming** | `src/api/main.py` | `tests/test_api_streaming.py` |
 
 ---
 
@@ -208,26 +217,33 @@ fnol-claims-triage-copilot/
 │   └── semantic_memory.sqlite  # Tiered persistent memory
 ├── docs/
 │   ├── compliance.md           # Regulatory & AC-01..AC-10 traceability
-│   ├── failure-analysis.md     # Observed failure RCA, span IDs & mitigations
+│   ├── failure-analysis.md     # Observed failure RCA, verified span IDs & fixes
 │   ├── model-card.md           # Model Card specification
-│   ├── output-risk.md          # Output risk analysis & safety boundaries
-│   └── risk-register.md        # Technical risk register & mitigations
+│   ├── output-risk.md          # Output risk analysis, risk tiers & JSON samples
+│   ├── risk-register.md        # Technical risk register & mitigations
+│   └── rubric_checklist.md     # 100-mark rubric traceability & verification matrix
 ├── logs/
 │   ├── agent_actions.jsonl     # Consequential action audit trail
+│   ├── mcp_errors.jsonl        # Subprocess MCP error logs
 │   ├── mcp_transcript.jsonl    # FastMCP execution transcript
 │   └── tool_calls.jsonl        # RAG tool execution log
 ├── mcp_server/
 │   ├── server.py               # FastMCP stdio server (2 tools + 1 resource)
 │   └── client.py               # Client adapter
 ├── reports/
+│   ├── dashboard_data.csv      # Machine-readable operational metrics table
 │   ├── dashboard_data.json     # Dynamic operational dashboard metrics
 │   ├── dashboard.png           # Visual triage operational dashboard
 │   ├── golden_signals.json     # Empirical P50/P95 latency, tokens, cost metrics
+│   ├── eval_report.json        # DeepEval 9-scenario benchmark report
 │   └── deepeval_benchmark.json # Faithfulness & hallucination benchmark
 ├── scripts/
-│   └── eval_deepeval.py        # DeepEval evaluation with Gemini judge
+│   ├── eval_deepeval.py        # DeepEval 9-case evaluation with Gemini judge
+│   └── generate_dashboard_image.py # Dynamic telemetry dashboard generator
 ├── specs/                      # Modular architecture specifications
 ├── src/
+│   ├── api/                    # FastAPI REST & SSE streaming interface
+│   │   └── main.py             # SSE streaming triage endpoints
 │   ├── cli.py                  # CLI entrypoint
 │   ├── graph.py                # LangGraph supervisor & worker agents
 │   ├── context/                # Quarantine & summarization middleware
@@ -235,7 +251,7 @@ fnol-claims-triage-copilot/
 │   ├── memory/                 # Tiered semantic memory & PII masking
 │   ├── observability/          # Phoenix tracing & audit logging
 │   └── tools/                  # FAISS / Lexical Agentic RAG tool
-├── tests/                      # 66 pytest unit tests
+├── tests/                      # 72 pytest unit tests
 └── traces/
     ├── phoenix_spans.parquet   # OTel spans in columnar format
     └── phoenix_spans.jsonl     # OTel spans in JSON Lines format

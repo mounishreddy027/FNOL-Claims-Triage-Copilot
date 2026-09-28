@@ -48,11 +48,9 @@ ightarrow$ **LOW (2)**
 
 ### RSK-04: Plaintext PII Leakage into Public Logs or Telemetry
 - **Description:** Policyholder SSNs, credit cards, or raw policy numbers leaked in audit logs or Phoenix traces.
-- **Inherent Risk:** Likelihood: 4 (Likely) | Impact: 4 (Major) $
-ightarrow$ **HIGH (16)**
-- **Technical Control:** `mask_identifier` applied across all logging middleware (`logs/mcp_transcript.jsonl`, `logs/agent_actions.jsonl`). Input guardrail redacts SSNs and credit cards (`[REDACTED_SSN]`, `[REDACTED_CC]`).
-- **Residual Risk:** Likelihood: 1 (Rare) | Impact: 1 (Negligible) $
-ightarrow$ **LOW (1)**
+- **Inherent Risk:** Likelihood: 4 (Likely) | Impact: 4 (Major) -> **HIGH (16)**
+- **Technical Control:** Deterministic Presidio-aligned regex masking in `src/guardrails/input_guardrails.py` redacts SSNs (`[REDACTED_SSN]`), credit cards (`[REDACTED_CC]`), and phone numbers. Masking in `src/memory/tiered_memory.py` (`mask_identifier`) masks policy numbers (`POL-***-CA`) and claimant IDs across all logging middleware (`logs/mcp_transcript.jsonl`, `logs/agent_actions.jsonl`) and OTel telemetry.
+- **Residual Risk:** Likelihood: 1 (Rare) | Impact: 1 (Negligible) -> **LOW (1)**
 
 ### RSK-05: Hallucinated Policy Coverage or Fabricated Deductibles
 - **Description:** Model invents non-existent insurance benefits (e.g. claiming street racing or commercial delivery is covered).

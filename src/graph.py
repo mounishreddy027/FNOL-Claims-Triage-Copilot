@@ -45,11 +45,15 @@ from src.llm import invoke_gemini_with_fallback, is_gemini_configured
 
 class ClaimClassificationResult(BaseModel):
     """Structured output for the Claim Classification Agent."""
-    claim_type: str = Field(description="Classified claim type (Auto Collision, Comprehensive, Property, Bodily Injury, Theft, Liability)")
+    claim_type: str = Field(description="Classified claim type (Auto Collision, Comprehensive, Property, Bodily Injury, Theft, Liability, Out-of-Scope, Ambiguous)")
     severity: Literal["Low", "Medium", "High", "Severe"] = Field(description="Severity tier of the loss")
     estimated_damage: float = Field(ge=0.0, description="Estimated total loss amount in USD")
     loss_summary: str = Field(description="Concise factual description of the incident")
     confidence: float = Field(ge=0.0, le=1.0, description="Model confidence score")
+    intent: Literal["FNOL_CLAIM", "OUT_OF_SCOPE", "AMBIGUOUS", "GENERAL_INQUIRY"] = Field(
+        default="FNOL_CLAIM",
+        description="Identified user intent (AC-04: FNOL loss claim vs ambiguous or out-of-scope inquiry)"
+    )
 
 
 class CoverageCheckResult(BaseModel):
@@ -366,41 +370,71 @@ def claim_classification_agent_node(state: FNOLState) -> Dict[str, Any]:
         severity = "Low"
         estimated_damage = 3500.0
         confidence = 0.92
+        intent = "FNOL_CLAIM"
 
-        if "totaled" in text_lower or "severe" in text_lower or "hospital" in text_lower or "airbag" in text_lower:
-            severity = "Severe"
-            estimated_damage = 32000.0
-            confidence = 0.95
-        elif "major" in text_lower or "highway" in text_lower or "t-bone" in text_lower:
-            severity = "High"
-            estimated_damage = 18000.0
-            confidence = 0.90
-        elif "minor" in text_lower or "scratch" in text_lower or "fender" in text_lower:
+        loss_keywords = [
+            "accident", "crash", "collision", "hit", "damage", "scratch", "dent", "stolen", "theft",
+            "vandalism", "fire", "flood", "tree", "glass", "windshield", "car", "vehicle", "truck",
+            "bumper", "fender", "rear", "front", "injury", "loss", "claim", "driver", "parked",
+            "hail", "storm", "water", "rollover", "totaled"
+        ]
+        out_of_scope_patterns = [
+            "purchase", "buy insurance", "umbrella", "billing", "bank account", "refund", "life insurance",
+            "quote", "recipe", "cookie", "grammar", "weather", "sports", "joke", "code", "song"
+        ]
+        has_loss_terms = any(k in text_lower for k in loss_keywords)
+        is_explicit_oos = any(w in text_lower for w in out_of_scope_patterns)
+
+        if is_explicit_oos or not has_loss_terms:
+            claim_type = "Out-of-Scope"
+            intent = "OUT_OF_SCOPE"
             severity = "Low"
-            estimated_damage = 1800.0
-            confidence = 0.94
-        elif "moderate" in text_lower or "dent" in text_lower or "bumper" in text_lower:
-            severity = "Medium"
-            estimated_damage = 7500.0
-            confidence = 0.88
+            estimated_damage = 0.0
+            confidence = 0.99
+            summary = "Inquiry identified as out-of-scope or non-FNOL loss request. Requires human customer service handling."
+        elif len(narrative.strip()) < 8 or narrative.strip().lower() in ["hello", "hi", "help", "test"]:
+            claim_type = "Ambiguous"
+            intent = "AMBIGUOUS"
+            severity = "Low"
+            estimated_damage = 0.0
+            confidence = 0.40
+            summary = "Input text is ambiguous or lacks loss incident specifics."
+        else:
+            if "totaled" in text_lower or "severe" in text_lower or "hospital" in text_lower or "airbag" in text_lower:
+                severity = "Severe"
+                estimated_damage = 32000.0
+                confidence = 0.95
+            elif "major" in text_lower or "highway" in text_lower or "t-bone" in text_lower:
+                severity = "High"
+                estimated_damage = 18000.0
+                confidence = 0.90
+            elif "minor" in text_lower or "scratch" in text_lower or "fender" in text_lower:
+                severity = "Low"
+                estimated_damage = 1800.0
+                confidence = 0.94
+            elif "moderate" in text_lower or "dent" in text_lower or "bumper" in text_lower:
+                severity = "Medium"
+                estimated_damage = 7500.0
+                confidence = 0.88
 
-        if "theft" in text_lower or "stolen" in text_lower:
-            claim_type = "Theft"
-        elif "tree" in text_lower or "roof" in text_lower or "water" in text_lower:
-            claim_type = "Property Damage"
-        elif "injury" in text_lower or "neck" in text_lower or "paramedics" in text_lower:
-            claim_type = "Bodily Injury"
+            if "theft" in text_lower or "stolen" in text_lower:
+                claim_type = "Theft"
+            elif "tree" in text_lower or "roof" in text_lower or "water" in text_lower:
+                claim_type = "Property Damage"
+            elif "injury" in text_lower or "neck" in text_lower or "paramedics" in text_lower:
+                claim_type = "Bodily Injury"
 
-        summary = f"Claim classified as {claim_type} with {severity} severity. Estimated loss: ${estimated_damage:,.2f}."
+            summary = f"Claim classified as {claim_type} with {severity} severity. Estimated loss: ${estimated_damage:,.2f}."
         
         result = ClaimClassificationResult(
             claim_type=claim_type,
             severity=severity,
             estimated_damage=estimated_damage,
             loss_summary=summary,
-            confidence=confidence
+            confidence=confidence,
+            intent=intent
         )
-        print(f"  [Agent: ClaimClassification] Generated via Deterministic Fallback: {result.claim_type} (Severity: {result.severity}, Loss: ${result.estimated_damage:,.2f})")
+        print(f"  [Agent: ClaimClassification] Generated via Deterministic Fallback: {result.claim_type} (Intent: {result.intent}, Severity: {result.severity}, Loss: ${result.estimated_damage:,.2f})")
 
     latency_ms = max(0.5, (time.perf_counter() - t0) * 1000.0)
     audit_events.append({
@@ -660,6 +694,13 @@ def routing_decision_node(state: FNOLState) -> Dict[str, Any]:
         escalation_reason = f"System tool or memory error detected during evaluation: {', '.join(critical_errors)}. Manual human review required."
         rationale = "Claim could not be safely automated due to execution errors. Escalated to Human Review."
 
+    elif classification.get("intent") in ["OUT_OF_SCOPE", "AMBIGUOUS", "GENERAL_INQUIRY"] or classification.get("claim_type") in ["Out-of-Scope", "Ambiguous"]:
+        queue = "escalate_human"
+        auto_approved = False
+        det_intent = classification.get("intent", "OUT_OF_SCOPE")
+        escalation_reason = f"Intent identified as {det_intent} (out-of-scope or ambiguous request); escalated to human representative per AC-04."
+        rationale = "Customer inquiry is out-of-scope or ambiguous and cannot be automated as an insurance loss claim. Escalated to Customer Service."
+
     elif requires_siu or fraud_score >= 0.65:
         queue = "investigate"
         auto_approved = False
@@ -825,6 +866,53 @@ def get_compiled_app(db_path: str = "data/checkpoints.sqlite"):
     graph = build_fnol_graph()
     app = graph.compile(checkpointer=checkpointer)
     return app, checkpointer
+
+
+def run_fnol_graph(
+    claim_id: str,
+    raw_claim_text: str,
+    claimant_id: str = "CLM-001",
+    policy_number: str = "POL-001",
+    location: str = "Austin, TX",
+    incident_date: str = "2026-09-26",
+    thread_id: Optional[str] = None
+) -> Dict[str, Any]:
+    """Execute a single claim through the LangGraph triage pipeline."""
+    from src.observability.tracing import set_current_trace_id
+    from src.memory.tiered_memory import mask_identifier
+    import uuid
+
+    claim_trace_id = uuid.uuid5(uuid.NAMESPACE_DNS, f"fnol-claim-{claim_id}").hex
+    set_current_trace_id(claim_trace_id)
+
+    app, checkpointer = get_compiled_app()
+    thread_id = thread_id or f"thread-{uuid.uuid4().hex[:8]}"
+
+    initial_state: FNOLState = {
+        "claim_id": claim_id,
+        "claimant_id_masked": mask_identifier(claimant_id),
+        "policy_number_masked": mask_identifier(policy_number),
+        "raw_claim_text": raw_claim_text,
+        "sanitized_text": "",
+        "quarantined_text": None,
+        "is_quarantined": False,
+        "incident_date": incident_date,
+        "loss_location": location,
+        "classification": None,
+        "coverage_result": None,
+        "fraud_risk": None,
+        "routing_decision": None,
+        "current_step": "init",
+        "next_agent": None,
+        "audit_trail": [],
+        "errors": [],
+        "claimant_profile": None,
+        "prior_claims_count": 0,
+        "recalled_memories": []
+    }
+
+    config = {"configurable": {"thread_id": thread_id}}
+    return app.invoke(initial_state, config=config)
 
 
 if __name__ == "__main__":

@@ -447,3 +447,71 @@ def test_threat_block_halts_execution_before_worker_agents():
     assert final_state["coverage_result"] is None
     assert final_state["fraud_risk"] is None
 
+
+def test_intent_handling_and_safe_routing_for_out_of_scope_query():
+    """Verify that out-of-scope non-FNOL inquiries are classified with OUT_OF_SCOPE intent and routed to human review (AC-04)."""
+    out_of_scope_text = "Can you give me a recipe for chocolate chip cookies and explain French grammar rules?"
+    
+    state: FNOLState = {
+        "claim_id": "CLM-OUT-OF-SCOPE-001",
+        "claimant_id_masked": "CLM-***-US",
+        "policy_number_masked": "POL-***-US",
+        "raw_claim_text": out_of_scope_text,
+        "sanitized_text": out_of_scope_text,
+        "quarantined_text": None,
+        "is_quarantined": False,
+        "incident_date": "2026-09-28",
+        "loss_location": "New York, NY",
+        "classification": None,
+        "coverage_result": None,
+        "fraud_risk": None,
+        "routing_decision": None,
+        "current_step": "init",
+        "next_agent": None,
+        "audit_trail": [],
+        "errors": []
+    }
+    
+    # 1. Classification worker detects OUT_OF_SCOPE intent
+    cls_out = claim_classification_agent_node(state)
+    assert "classification" in cls_out
+    assert cls_out["classification"]["intent"] in ["OUT_OF_SCOPE", "GENERAL_INQUIRY"]
+    
+    # 2. Routing decision routes out-of-scope queries to escalate_human with auto_approved=False
+    state.update(cls_out)
+    route_out = routing_decision_node(state)
+    routing = route_out["routing_decision"]
+    assert routing["routing_queue"] == "escalate_human"
+    assert routing["auto_approved"] is False
+    assert "out of scope" in routing["escalation_reason"].lower() or "intent" in routing["escalation_reason"].lower()
+
+
+def test_token_count_estimated_flag():
+    """Verify that OTel spans explicitly mark whether token counts are Gemini-reported or estimated."""
+    from src.observability.tracing import record_span
+    
+    # Case 1: Real token counts supplied -> is_estimated must be False
+    span_real = record_span(
+        name="test_real_tokens",
+        span_type="LLM",
+        inputs={"prompt": "test prompt"},
+        outputs={"response": "test output"},
+        latency_ms=25.0,
+        prompt_tokens=50,
+        completion_tokens=25,
+        total_tokens=75,
+        is_estimated=False
+    )
+    assert span_real["attributes.token_count.total"] == 75
+    assert span_real["attributes.token_count.is_estimated"] is False
+    
+    # Case 2: No token counts supplied -> is_estimated must be True
+    span_est = record_span(
+        name="test_est_tokens",
+        span_type="AGENT",
+        inputs={"state": "processing claim"},
+        outputs={"state": "completed"},
+        latency_ms=10.0
+    )
+    assert span_est["attributes.token_count.is_estimated"] is True
+

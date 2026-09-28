@@ -1,39 +1,39 @@
 {
-  "report_generated_at": "2026-09-28T05:21:39.831294+00:00",
-  "total_spans": 41,
-  "total_tokens": 3118,
+  "report_generated_at": "2026-09-28T06:33:48.675832+00:00",
+  "total_spans": 36,
+  "total_tokens": 3282,
   "token_breakdown": {
-    "prompt_tokens": 838,
-    "completion_tokens": 2280
+    "prompt_tokens": 766,
+    "completion_tokens": 2516
   },
-  "estimated_cost_usd": 0.000747,
+  "estimated_cost_usd": 0.000812,
   "latency_metrics": {
-    "p50_latency_ms": 461.77,
-    "p95_latency_ms": 3297.13,
-    "thinking_latency_p50_ms": 25.81,
-    "acting_latency_p50_ms": 15.49,
-    "tool_latency_p50_ms": 3065.53,
-    "llm_latency_p50_ms": 455.6
+    "p50_latency_ms": 872.5,
+    "p95_latency_ms": 3016.61,
+    "thinking_latency_p50_ms": 551.02,
+    "acting_latency_p50_ms": 330.61,
+    "tool_latency_p50_ms": 2393.94,
+    "llm_latency_p50_ms": 574.37
   },
   "success_rate_metrics": {
-    "operational_success_rate": 0.9512,
-    "strict_unassisted_success_rate": 0.7317,
+    "operational_success_rate": 1.0,
+    "strict_unassisted_success_rate": 0.7778,
     "span_counts": {
-      "successful_ok": 30,
+      "successful_ok": 28,
       "graceful_fallback": 8,
-      "threat_blocked": 1,
-      "unhandled_errors": 2
+      "threat_blocked": 0,
+      "unhandled_errors": 0
     },
     "semantics_explanation": "Operational success includes completed triage, intentional security threat blocks, and graceful 429 deterministic fallbacks."
   },
-  "success_rate": 0.9512,
+  "success_rate": 1.0,
   "accuracy_score": 1.0,
   "hallucination_rate": 0.0,
   "evaluation_metrics": {
     "grounded_cases_accuracy": 1.0,
     "system_hallucination_rate": 0.0,
     "negative_control_detection_recall": 1.0,
-    "grounded_cases_evaluated": 3,
+    "grounded_cases_evaluated": 8,
     "negative_controls_evaluated": 1,
     "system_failures_count": 0
   }
