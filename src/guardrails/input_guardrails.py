@@ -16,23 +16,26 @@ POLICY_UNMASKED_PATTERN = r"\bPOL-(?!\*\*\*)[A-Z0-9]{4,10}-[A-Z0-9]{2}\b"
 
 # Adversarial prompt injection patterns
 INJECTION_PATTERNS = [
-    r"ignore\s+(all\s+)?(previous|prior)\s+instructions",
-    r"system\s+prompt",
-    r"override\s+(policy|rules|instructions)",
+    r"ignore\s+(all\s+)?(previous|prior|rules|policies)\s+(instructions|rules)?",
+    r"system\s+(prompt|override)",
+    r"override\s+(policy|rules|instructions|pol-excl)",
     r"exfiltrate",
-    r"bypass\s+(verification|check|guardrail)",
+    r"bypass\s+(all\s+)?(verification|check|guardrail|fraud\s+screening)",
     r"do\s+not\s+route\s+to\s+investigation",
     r"grant\s+admin",
     r"drop\s+table",
     r"sudo\s+",
     r"<script>",
     r"assistant\s*:\s*approve",
+    r"SWdub3Jl",
+    r"roleplay\s+game"
 ]
 
 # Toxic / threat keywords
 THREAT_PATTERNS = [
     r"\bkill\s+(you|the\s+adjuster|everyone|somebody|someone|people)\b",
-    r"\b(i\s+will|i'll)\s+(kill|murder|shoot|harm|destroy)\b",
+    r"\b(i\s+will|i'll)\s+(kill|murder|shoot|harm|destroy|hurt|hunt\s+down|attack)\b",
+    r"\b(hunt\s+down|hurt|assault|attack|burn\s+down|burn\s+your\s+office)\b",
     r"\b(bomb|blow\s+up|burn\s+down)\b",
     r"\bi\s+will\s+destroy\b",
     r"\bpay\s+(me\s+)?(now\s+)?or\s+else\b",

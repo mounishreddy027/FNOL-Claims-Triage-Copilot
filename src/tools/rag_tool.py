@@ -319,8 +319,20 @@ def get_policy_rag_tool() -> PolicyRAGTool:
     return _rag_instance
 
 
+from langchain_core.tools import tool
+from src.observability.tracing import logged_tool
+
+@tool
+@logged_tool("coverage_check")
+def rag_search_policy_coverage(query: str) -> Dict[str, Any]:
+    """Search policy clauses relevant to the claim narrative and return citations."""
+    rag = get_policy_rag_tool()
+    return rag.search_policy_coverage(query)
+
+
 if __name__ == "__main__":
-    tool = PolicyRAGTool()
-    res = tool.search_policy_coverage("Car was struck from behind at intersection, front bumper dented.")
+    tool_inst = get_policy_rag_tool()
+    res = tool_inst.search_policy_coverage("Car was struck from behind at intersection, front bumper dented.")
     print("RAG Query Result:")
     print(json.dumps(res, indent=2))
+

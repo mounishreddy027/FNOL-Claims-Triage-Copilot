@@ -63,12 +63,22 @@ mcp = FastMCP("fnol-claims-triage-mcp")
 def lookup_policy_details(policy_number: str) -> Dict[str, Any]:
     """Look up policy coverage limits, deductibles, active status, and inception terms."""
     start_time = time.time()
+    if not policy_number or not isinstance(policy_number, str) or policy_number.strip() in ("", "None", "INVALID"):
+        err_res = {
+            "status": "DEGRADED",
+            "error": "Invalid or missing policy_number provided to lookup_policy_details",
+            "requires_escalation": True
+        }
+        latency = (time.time() - start_time) * 1000
+        log_mcp_call("lookup_policy_details", {"policy_number": str(policy_number)}, err_res, latency, status="DEGRADED")
+        return err_res
+
     masked_pol = mask_identifier(policy_number)
     
     # Synthetic policy lookup database
     policy_data = {
-        "policy_number_masked": masked_pol,
         "status": "ACTIVE",
+        "policy_number_masked": masked_pol,
         "policy_type": "Personal Auto Policy (Gold Standard)",
         "effective_date": "2024-01-01",
         "expiration_date": "2027-01-01",
@@ -108,6 +118,25 @@ def calculate_claim_risk_score(
 ) -> Dict[str, Any]:
     """Calculate an actuarial risk profile score for triage decisioning."""
     start_time = time.time()
+    
+    # Validate damage_amount
+    try:
+        dam = float(damage_amount)
+        if dam < 0:
+            raise ValueError(f"damage_amount cannot be negative: got {damage_amount}")
+        damage_amount = dam
+    except (ValueError, TypeError) as err:
+        err_res = {
+            "status": "DEGRADED",
+            "error": f"Invalid damage_amount: {err}",
+            "claim_risk_score": 1.0,
+            "risk_tier": "HIGH",
+            "requires_escalation": True,
+            "recommended_action": "ESCALATE_HUMAN"
+        }
+        latency = (time.time() - start_time) * 1000
+        log_mcp_call("calculate_claim_risk_score", {"damage_amount": str(damage_amount)}, err_res, latency, status="DEGRADED")
+        return err_res
     
     base_score = 0.10
     factors = []

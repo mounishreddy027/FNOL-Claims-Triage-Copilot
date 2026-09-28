@@ -38,3 +38,10 @@
 {"timestamp": "2026-09-28T05:21:39.774246+00:00", "tool_name": "invalid_hypothetical_tool", "args": {"param": "test_value"}, "error": "unhandled errors in a TaskGroup (1 sub-exception)", "status": "ERROR"}
 {"timestamp": "2026-09-28T06:20:58.588358+00:00", "tool_name": "invalid_actuarial_tool", "args": {"arg": "val"}, "error": "unhandled errors in a TaskGroup (1 sub-exception)", "status": "ERROR"}
 {"timestamp": "2026-09-28T06:21:59.881060+00:00", "tool_name": "invalid_hypothetical_tool", "args": {"param": "test_value"}, "error": "unhandled errors in a TaskGroup (1 sub-exception)", "status": "ERROR"}
+{"timestamp": "2026-09-28T08:32:48.292188+00:00", "tool_name": "invalid_actuarial_tool", "args": {"arg": "val"}, "error": "unhandled errors in a TaskGroup (1 sub-exception)", "status": "ERROR"}
+{"timestamp": "2026-09-28T08:33:44.972571+00:00", "tool_name": "invalid_hypothetical_tool", "args": {"param": "test_value"}, "error": "unhandled errors in a TaskGroup (1 sub-exception)", "status": "ERROR"}
+{"timestamp": "2026-09-28T11:23:20.877004+00:00", "tool_name": "invalid_actuarial_tool", "args": {"arg": "val"}, "error": "unhandled errors in a TaskGroup (1 sub-exception)", "status": "DEGRADED"}
+{"timestamp": "2026-09-28T11:26:03.929413+00:00", "tool_name": "invalid_hypothetical_tool", "args": {"param": "test_value"}, "error": "unhandled errors in a TaskGroup (1 sub-exception)", "status": "DEGRADED"}
+{"timestamp": "2026-09-28T11:26:11.921795+00:00", "tool_name": "invalid_actuarial_tool", "args": {"arg": "val"}, "error": "unhandled errors in a TaskGroup (1 sub-exception)", "status": "DEGRADED"}
+{"timestamp": "2026-09-28T11:47:28.718077+00:00", "tool_name": "invalid_hypothetical_tool", "args": {"param": "test_value"}, "error": "unhandled errors in a TaskGroup (1 sub-exception)", "status": "DEGRADED"}
+{"timestamp": "2026-09-28T12:19:43.619355+00:00", "tool_name": "invalid_actuarial_tool", "args": {"arg": "val"}, "error": "unhandled errors in a TaskGroup (1 sub-exception)", "status": "DEGRADED"}

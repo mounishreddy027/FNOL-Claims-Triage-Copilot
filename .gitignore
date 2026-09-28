@@ -20,12 +20,12 @@ env/
 .coverage
 htmlcov/
 
-# Local databases & checkpoints (ephemeral or non-committed)
+# Local databases & checkpoints (No PII at rest)
+data/*.sqlite
+data/*.db
+*.sqlite
 *.sqlite-journal
-data/test_*.sqlite
-data/test_*.db
 traces/test_*
-logs/*test*
 
 # IDE / Editor configuration
 .vscode/

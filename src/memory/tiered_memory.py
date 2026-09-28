@@ -36,19 +36,30 @@ def mask_identifier(val: str) -> str:
     """Mask sensitive policy numbers or claimant IDs for privacy compliance.
     
     Example:
-        CLM-9821-M -> CLM-***-M
+        CLM-98214-US -> CLM-***-US
         POL-554432-CA -> POL-***-CA
+    Preserves policy clause IDs intact (e.g., POL-SEC-04-COLLISION, CL-COLL-04).
     """
     if not val:
         return ""
+    import re
+    if "***" in val:
+        return val
+    # Do not mask policy clause IDs or exclusions
+    if "SEC-" in val or "EXCL-" in val or val.startswith("CL-") or val.startswith("CLAUSE-"):
+        return val
+    if re.match(r"^POL-\d{4,10}-[A-Z]{2}$", val):
+        parts = val.split("-")
+        return f"POL-***-{parts[-1]}"
+    if re.match(r"^CLM-\d{4,10}-[A-Z]{2}$", val):
+        parts = val.split("-")
+        return f"CLM-***-{parts[-1]}"
     parts = val.split("-")
-    if len(parts) >= 3:
+    if len(parts) >= 3 and parts[0] in ("POL", "CLM"):
         return f"{parts[0]}-***-{parts[-1]}"
-    if len(parts) == 2:
+    if len(parts) == 2 and parts[0] in ("POL", "CLM"):
         return f"{parts[0]}-***"
-    if len(val) > 4:
-        return f"{val[:2]}***{val[-2:]}"
-    return "***"
+    return val
 
 
 class MemoryEntry(BaseModel):

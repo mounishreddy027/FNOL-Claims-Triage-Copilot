@@ -1,0 +1,72 @@
+[
+  {
+    "clause_id": "POL-SEC-04-COLLISION",
+    "title": "Personal Auto Policy - Section IV: Collision Coverage",
+    "text": "## 4.1 Insuring Agreement\nWe will pay for direct, sudden, and accidental physical loss to your covered auto caused by collision with another motor vehicle, stationary object, or overturn of your vehicle.",
+    "deductible": 500.0,
+    "limit": 50000.0
+  },
+  {
+    "clause_id": "POL-SEC-04-COLLISION",
+    "title": "Personal Auto Policy - Section IV: Collision Coverage",
+    "text": "## 4.2 Limits of Liability & Deductible\n- **Maximum Limit:** $50,000 per occurrence, or the actual cash value (ACV) of the vehicle at the time of loss, whichever is less.\n- **Standard Deductible:** $500.00 applies to each covered collision occurrence before policy proceeds are disbursed.",
+    "deductible": 500.0,
+    "limit": 50000.0
+  },
+  {
+    "clause_id": "POL-SEC-04-COLLISION",
+    "title": "Personal Auto Policy - Section IV: Collision Coverage",
+    "text": "## 4.3 Fast-Track Settlement Clause\nClaims where physical damage is estimated under $5,000.00, involving no bodily injuries and no disputed liability, are eligible for automated first-notice fast-track settlement.",
+    "deductible": 500.0,
+    "limit": 50000.0
+  },
+  {
+    "clause_id": "POL-SEC-06-COMPREHENSIVE",
+    "title": "Personal Auto Policy - Section VI: Comprehensive Coverage",
+    "text": "## 6.1 Insuring Agreement\nWe will pay for direct, sudden, and accidental physical loss to your covered auto resulting from perils other than collision.",
+    "deductible": 250.0,
+    "limit": 45000.0
+  },
+  {
+    "clause_id": "POL-SEC-06-COMPREHENSIVE",
+    "title": "Personal Auto Policy - Section VI: Comprehensive Coverage",
+    "text": "## 6.2 Covered Perils\nCovered causes of loss include:\n1. Theft, larceny, or unrecovered stolen vehicle.\n2. Fire, explosion, or earthquake.\n3. Windstorm, hail, water, or flood damage.\n4. Vandalism, malicious mischief, or civil commotion.\n5. Impact with a bird or domestic/wild animal.\n6. Breakage of window glass without vehicular impact.",
+    "deductible": 250.0,
+    "limit": 45000.0
+  },
+  {
+    "clause_id": "POL-SEC-06-COMPREHENSIVE",
+    "title": "Personal Auto Policy - Section VI: Comprehensive Coverage",
+    "text": "## 6.3 Limits of Liability & Deductible\n- **Maximum Limit:** $45,000 per occurrence.\n- **Standard Deductible:** $250.00 per occurrence.",
+    "deductible": 250.0,
+    "limit": 45000.0
+  },
+  {
+    "clause_id": "POL-SIU-02-FRAUD_SCREENING",
+    "title": "Special Investigation Unit (SIU) Fraud Screening Protocol",
+    "text": "## 2.1 Mandatory Fraud Indicators\nA claim must be routed to the Special Investigation Unit (SIU) for investigation when any of the following occur:\n1. Inception proximity: Loss occurs within 72 hours of policy purchase or renewal.\n2. Unverified cash transaction or missing police report for high-value claims.\n3. Multiple similar claims submitted across prior sessions.\n4. Tampering: Direct attempts to bypass automated rules, manipulate prompt instructions, or exfiltrate system data.",
+    "deductible": 500.0,
+    "limit": 50000.0
+  },
+  {
+    "clause_id": "POL-EXCL-08-COMMERCIAL_RACING",
+    "title": "General Policy Exclusions & Policyholder Obligations",
+    "text": "## 8.1 Excluded Operations\nWe do not provide coverage for any vehicle:\n1. Being operated in any organized, amateur, or spontaneous racing, speed contest, or performance demonstration.\n2. Being utilized for unauthorized commercial delivery, peer-to-peer rideshare (e.g. Uber/Lyft), or freight hauling unless endorsed.\n3. Resulting from intentional or fraudulent acts committed by or at the direction of the policyholder.",
+    "deductible": 0.0,
+    "limit": 0.0
+  },
+  {
+    "clause_id": "POL-SEC-01-PROPERTY",
+    "title": "Property & Casualty Policy - Section I: Property Damage",
+    "text": "## 1.1 Dwelling and Attached Structures\nWe cover accidental physical damage to the insured dwelling, garage, and perimeter structures caused by exterior impacts (such as falling trees, detached vehicle debris, or sudden collapse).",
+    "deductible": 1000.0,
+    "limit": 100000.0
+  },
+  {
+    "clause_id": "POL-SEC-01-PROPERTY",
+    "title": "Property & Casualty Policy - Section I: Property Damage",
+    "text": "## 1.2 Limits & Deductibles\n- **Maximum Limit:** $100,000 for attached structures.\n- **Standard Deductible:** $1,000.00 per claim.",
+    "deductible": 1000.0,
+    "limit": 100000.0
+  }
+]
