@@ -114,6 +114,10 @@ Watch what happens:
    - **Contract Proof:** Shows the exact legal clause (e.g., `POL-SEC-04-COLLISION`) so you know it's not making things up.
    - **Adjuster Buttons:** At the bottom, you can pretend to be the human adjuster and click *"Approve Payout"* or *"Request Police Report"*.
 
+#### 📸 Live Output Screenshot (Fast-Track Auto-Approval)
+![Fast-Track Auto-Approval Screen Output](assets/ui_fast_track_triage.png)
+*Figure 1: The Live Web Portal showing a completed Fast-Track claim. The 5 helpers light up in green, damage is calculated ($1,200), policy clause POL-SEC-04-COLLISION is verified, and the claim is Auto-Approved in 872 milliseconds!*
+
 ---
 
 ## ✍️ Want to Tell Your Own Story? (Custom Claim Submission)
@@ -124,6 +128,10 @@ You don't have to use the pre-set buttons—you can test your **own real-life ac
 1. **Find the Big Narrative Box:** Scroll down to the box labeled *"First Notice of Loss (FNOL) Narrative"*.
 2. **Clear the Text and Write in Plain English:** You don't need fancy legal words. Just describe what happened like you were texting a friend.
 3. **Hit the Blue Button:** Click *"Trigger Multi-Agent Triage Workflow"* and watch the AI analyze your unique story live!
+
+#### 📸 Live Output Screenshot (Custom Story Triage - Hailstorm Loss)
+![Custom Story Triage Screen Output](assets/ui_custom_story_triage.png)
+*Figure 2: Custom Story Triage in action! A user submitted an everyday Hailstorm loss narrative. The Copilot classified it under Comprehensive Weather coverage ($3,200 loss) with zero fraud risk and dispatched it to paintless dent repair.*
 
 ### 💡 4 Helpful Tips for Writing Your Story
 To get the most accurate result from the Copilot, include these 4 everyday details:

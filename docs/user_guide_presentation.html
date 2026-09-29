@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <title>FNOL Claims Copilot - Everyday User Guide</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
     
     @page {
       size: A4 portrait;
-      margin: 14mm 16mm 14mm 16mm;
+      margin: 12mm 15mm 12mm 15mm;
     }
 
     * {
@@ -21,14 +21,15 @@
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       color: #0f172a;
       background: #ffffff;
-      line-height: 1.45;
-      font-size: 10.5pt;
+      line-height: 1.4;
+      font-size: 10pt;
     }
 
     .page {
       page-break-after: always;
       position: relative;
-      height: 100%;
+      min-height: 270mm;
+      padding-bottom: 24px;
     }
 
     .page:last-child {
@@ -40,9 +41,9 @@
       justify-content: space-between;
       align-items: center;
       border-bottom: 2px solid #e2e8f0;
-      padding-bottom: 8px;
-      margin-bottom: 16px;
-      font-size: 8.5pt;
+      padding-bottom: 6px;
+      margin-bottom: 12px;
+      font-size: 8pt;
       color: #64748b;
       text-transform: uppercase;
       letter-spacing: 0.05em;
@@ -57,84 +58,84 @@
       display: flex;
       justify-content: space-between;
       border-top: 1px solid #e2e8f0;
-      padding-top: 6px;
-      font-size: 8pt;
+      padding-top: 4px;
+      font-size: 7.5pt;
       color: #94a3b8;
     }
 
     h1 {
-      font-size: 24pt;
+      font-size: 22pt;
       font-weight: 800;
       color: #0f172a;
       line-height: 1.15;
       letter-spacing: -0.03em;
-      margin-bottom: 4px;
+      margin-bottom: 3px;
     }
 
     .subtitle {
-      font-size: 12pt;
+      font-size: 11pt;
       color: #475569;
       font-weight: 400;
-      margin-bottom: 16px;
-      line-height: 1.35;
+      margin-bottom: 12px;
+      line-height: 1.3;
     }
 
     h2 {
-      font-size: 13pt;
+      font-size: 12pt;
       font-weight: 700;
       color: #1e293b;
-      margin-top: 16px;
-      margin-bottom: 8px;
+      margin-top: 12px;
+      margin-bottom: 6px;
       letter-spacing: -0.02em;
       border-bottom: 1px solid #f1f5f9;
-      padding-bottom: 4px;
+      padding-bottom: 3px;
     }
 
     p {
       color: #334155;
-      margin-bottom: 8px;
-      font-size: 9.5pt;
-      line-height: 1.5;
+      margin-bottom: 6px;
+      font-size: 9pt;
+      line-height: 1.45;
     }
 
     .card {
       background: #f8fafc;
       border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 10px 14px;
-      margin-bottom: 10px;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 8px;
     }
 
     .callout-green {
       background: #f0fdf4;
       border-left: 4px solid #16a34a;
-      padding: 10px 14px;
+      padding: 8px 12px;
       border-radius: 0 6px 6px 0;
-      margin: 10px 0;
+      margin: 8px 0;
     }
 
     .callout-blue {
       background: #eff6ff;
       border-left: 4px solid #2563eb;
-      padding: 10px 14px;
+      padding: 8px 12px;
       border-radius: 0 6px 6px 0;
-      margin: 10px 0;
+      margin: 8px 0;
     }
 
     .callout-amber {
       background: #fffbeb;
       border-left: 4px solid #f59e0b;
-      padding: 10px 14px;
+      padding: 8px 12px;
       border-radius: 0 6px 6px 0;
-      margin: 10px 0;
+      margin: 8px 0;
     }
 
     /* Comparison Table */
     table {
       width: 100%;
       border-collapse: collapse;
-      margin: 10px 0 14px 0;
-      font-size: 8.5pt;
+      margin: 8px 0 10px 0;
+      font-size: 8pt;
     }
 
     th {
@@ -142,12 +143,12 @@
       color: #1e293b;
       font-weight: 700;
       text-align: left;
-      padding: 7px 10px;
+      padding: 6px 8px;
       border-bottom: 2px solid #cbd5e1;
     }
 
     td {
-      padding: 7px 10px;
+      padding: 6px 8px;
       border-bottom: 1px solid #e2e8f0;
       color: #334155;
       vertical-align: top;
@@ -160,65 +161,88 @@
     .step-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 8px;
-      margin: 12px 0;
+      gap: 6px;
+      margin: 8px 0;
     }
 
     .step-card {
       background: #ffffff;
       border: 1px solid #cbd5e1;
       border-radius: 6px;
-      padding: 8px;
+      padding: 6px;
       text-align: center;
     }
 
     .step-num {
-      font-size: 8pt;
+      font-size: 7pt;
       font-weight: 700;
       color: #2563eb;
       text-transform: uppercase;
-      margin-bottom: 2px;
+      margin-bottom: 1px;
     }
 
     .step-name {
-      font-size: 8.5pt;
+      font-size: 8pt;
       font-weight: 700;
       color: #0f172a;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     .step-desc {
-      font-size: 7.5pt;
+      font-size: 7pt;
       color: #64748b;
-      line-height: 1.3;
+      line-height: 1.25;
     }
 
     .scenario-box {
       border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 10px 12px;
-      margin-bottom: 8px;
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin-bottom: 6px;
       background: #ffffff;
     }
 
     .scenario-title {
-      font-size: 9.5pt;
+      font-size: 8.5pt;
       font-weight: 700;
       display: flex;
       justify-content: space-between;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     .scenario-desc {
-      font-size: 8.5pt;
+      font-size: 8pt;
       color: #475569;
-      line-height: 1.4;
+      line-height: 1.35;
     }
 
-    .badge-green { background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-size: 7.5pt; font-weight: 700; }
-    .badge-amber { background: #fef3c7; color: #b45309; padding: 2px 6px; border-radius: 4px; font-size: 7.5pt; font-weight: 700; }
-    .badge-red { background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 4px; font-size: 7.5pt; font-weight: 700; }
-    .badge-blue { background: #dbeafe; color: #1d4ed8; padding: 2px 6px; border-radius: 4px; font-size: 7.5pt; font-weight: 700; }
+    .badge-green { background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-size: 7pt; font-weight: 700; }
+    .badge-amber { background: #fef3c7; color: #b45309; padding: 2px 6px; border-radius: 4px; font-size: 7pt; font-weight: 700; }
+    .badge-red { background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 4px; font-size: 7pt; font-weight: 700; }
+    .badge-blue { background: #dbeafe; color: #1d4ed8; padding: 2px 6px; border-radius: 4px; font-size: 7pt; font-weight: 700; }
+
+    .screenshot-box {
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      margin: 8px 0 4px 0;
+      background: #0f172a;
+    }
+
+    .screenshot-box img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .screenshot-caption {
+      font-size: 7.5pt;
+      color: #64748b;
+      font-style: italic;
+      text-align: center;
+      margin-bottom: 8px;
+    }
   </style>
 </head>
 <body>
@@ -242,8 +266,8 @@
     </p>
     
     <div class="callout-green">
-      <div style="font-weight: 700; color: #166534; font-size: 10pt; margin-bottom: 2px;">The Copilot Solution:</div>
-      <div style="font-size: 9pt; color: #14532d;">
+      <div style="font-weight: 700; color: #166534; font-size: 9.5pt; margin-bottom: 2px;">The Copilot Solution:</div>
+      <div style="font-size: 8.5pt; color: #14532d;">
         <strong>FNOL</strong> stands for <strong>"First Notice of Loss"</strong>—the insurance term for the first time you report an accident. This product is an <strong>instant digital insurance assistant</strong>. You type or speak what happened in simple everyday words, and in <strong>under 1 second</strong>, it checks your insurance policy and gives you an instant answer: <em>"Yes, your bumper is covered! Your deductible is $500. We've auto-approved your repair and assigned body shop #402."</em>
       </div>
     </div>
@@ -288,22 +312,22 @@
 
     <h2>3. Who Uses This Product?</h2>
     <div class="card">
-      <div style="font-weight: 700; color: #0f172a; font-size: 9.5pt; margin-bottom: 3px;">🚗 For You, the Car Owner (The Policyholder)</div>
-      <div style="font-size: 8.5pt; color: #475569;">
+      <div style="font-weight: 700; color: #0f172a; font-size: 9pt; margin-bottom: 2px;">🚗 For You, the Car Owner (The Policyholder)</div>
+      <div style="font-size: 8pt; color: #475569;">
         You don't want to read 60 pages of legal contracts after an accident. You just want to know if you're covered, what your deductible is, and where to take your car. You get instant answers on your smartphone without waiting on hold.
       </div>
     </div>
 
     <div class="card">
-      <div style="font-weight: 700; color: #0f172a; font-size: 9.5pt; margin-bottom: 3px;">💼 For the Insurance Adjuster (The Human Expert)</div>
-      <div style="font-size: 8.5pt; color: #475569;">
+      <div style="font-weight: 700; color: #0f172a; font-size: 9pt; margin-bottom: 2px;">💼 For the Insurance Adjuster (The Human Expert)</div>
+      <div style="font-size: 8pt; color: #475569;">
         This does <strong>not</strong> replace human adjusters. It takes away boring, repetitive paperwork! The Copilot handles simple bumper scratches automatically, allowing human adjusters to give their full care and attention to drivers in severe or traumatic accidents.
       </div>
     </div>
 
     <div class="footer-bar">
       <span>FNOL Claims-Triage Copilot • Non-Technical User Guide</span>
-      <span>Page 1 of 3</span>
+      <span>Page 1 of 4</span>
     </div>
   </div>
 
@@ -311,10 +335,10 @@
   <div class="page">
     <div class="header-bar">
       <span>FNOL Claims-Triage Copilot</span>
-      <span>How It Works & Quick Tutorial</span>
+      <span>How It Works & Live Output Screenshot</span>
     </div>
 
-    <h2>4. How It Works (The 5 Friendly Steps)</h2>
+    <h2>4. How It Works (The 5 Friendly Helpers Behind the Scenes)</h2>
     <p>
       When you submit your accident story, 5 digital helpers work together behind the scenes in under one second:
     </p>
@@ -323,7 +347,7 @@
       <div class="step-card">
         <div class="step-num">Step 1</div>
         <div class="step-name">🔒 Privacy Guard</div>
-        <div class="step-desc">Hides your Social Security, phone number, and ID so your personal data stays safe.</div>
+        <div class="step-desc">Hides your Social Security, phone, and ID so your personal data stays safe.</div>
       </div>
       <div class="step-card">
         <div class="step-num">Step 2</div>
@@ -347,60 +371,31 @@
       </div>
     </div>
 
-    <div class="callout-blue">
-      <div style="font-weight: 700; color: #1e40af; font-size: 9.5pt; margin-bottom: 2px;">The Smart Traffic Light Rule:</div>
-      <div style="font-size: 8.5pt; color: #1e3a8a;">
-        <strong>🟢 Green Light:</strong> Minor dent (<$5,000), clearly covered, no injuries? Approved immediately!<br/>
-        <strong>🟡 Yellow Light:</strong> Big accident ($45,000 rollover) or injuries? Hands off to a caring human adjuster with a ready-made summary.<br/>
-        <strong>🔴 Red Light:</strong> Suspicious scam (like a staged accident)? Flagged for fraud review before any money goes out.
-      </div>
-    </div>
-
-    <h2>5. Try It Yourself in 3 Clicks! (Hands-On Guide)</h2>
+    <h2>5. Try It in 3 Clicks & See the Real Screen Output</h2>
     <p>
-      You don't need any technical skills to try this out. Follow these 3 easy steps:
+      Open <strong>http://127.0.0.1:8000</strong> in your browser, pick a preset story (e.g. 🟢 <em>Fast-Track</em>), and click the blue button. Below is the <strong>actual visual result</strong> rendered by the system:
     </p>
 
-    <div class="card">
-      <div style="font-weight: 700; font-size: 9.5pt; margin-bottom: 4px;">Step 1: Open Your Browser</div>
-      <div style="font-size: 8.5pt; color: #475569;">
-        Type <strong>http://127.0.0.1:8000</strong> in your browser (Chrome, Edge, or Safari). You will see the clean, modern Copilot screen.
-      </div>
+    <!-- Output Screenshot 1: Fast Track -->
+    <div class="screenshot-box">
+      <img src="assets/ui_fast_track_triage.png" alt="Fast-Track Auto-Approval Screen Output">
+    </div>
+    <div class="screenshot-caption">
+      Figure 1: Live Web Screen Output. The 5 helpers light up in green, damage is calculated ($1,200), policy clause POL-SEC-04-COLLISION is verified, and the claim is Auto-Approved in 872 ms!
     </div>
 
-    <div class="card">
-      <div style="font-weight: 700; font-size: 9.5pt; margin-bottom: 4px;">Step 2: Pick One of the 4 Preset Story Buttons</div>
-      <div style="font-size: 8.5pt; color: #475569;">
-        On the top left, click any of the 4 colorful buttons (e.g. <strong>🟢 Fast-Track</strong> for a minor bumper tap, or <strong>🟡 Complex Loss</strong> for a highway rollover). The claim form fills itself out instantly!
-      </div>
-    </div>
-
-    <div class="card">
-      <div style="font-weight: 700; font-size: 9.5pt; margin-bottom: 4px;">Step 3: Click the Big Blue Button</div>
-      <div style="font-size: 8.5pt; color: #475569;">
-        Click <strong>"Trigger Multi-Agent Triage Workflow"</strong>. Watch the 5 step cards light up across the screen. In less than 1 second, the Copilot Decision Card appears on the right showing:
-        <ul style="margin-left: 20px; margin-top: 4px;">
-          <li>Where the claim went (Fast-Track, Human Adjuster, or Fraud Team).</li>
-          <li>Whether it was Auto-Approved (Green YES vs. Yellow NEEDS HUMAN REVIEW).</li>
-          <li>The exact contract paragraph cited (e.g., <code>POL-SEC-04-COLLISION</code>).</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="callout-amber" style="margin-top: 10px;">
-      <div style="font-weight: 700; color: #b45309; font-size: 9.5pt; margin-bottom: 2px;">✍️ Want to Tell Your Own Real-Life Story? (Custom Claim Submission)</div>
-      <div style="font-size: 8.5pt; color: #92400e; line-height: 1.4;">
-        Don't want to use the preset buttons? You can test <strong>any accident story</strong> you want!
-        <br/>• <strong>Click the Narrative text box:</strong> Clear out the sample words and describe what happened naturally.
-        <br/>• <strong>3 Quick Tips:</strong> Mention what parts were damaged (e.g. <em>"cracked side mirror"</em>, <em>"hail dimples on roof"</em>), confirm if anyone was injured (e.g. <em>"no injuries"</em>), and where it happened.
-        <br/>• <strong>Click the blue button</strong> to see the AI read and triage your custom story live!
-        <br/>• <em>Terminal user?</em> Type <code>python -m src.cli --mode interactive</code> and choose <strong>[5]</strong> to type your narrative.
+    <div class="callout-blue">
+      <div style="font-weight: 700; color: #1e40af; font-size: 8.5pt; margin-bottom: 2px;">What You See on the Decision Card:</div>
+      <div style="font-size: 8pt; color: #1e3a8a;">
+        • <strong>Routing Queue:</strong> <code>FAST-TRACK</code> (Green badge) — directly sent to preferred repair shops.<br/>
+        • <strong>Auto-Approved:</strong> <code>YES</code> — no waiting for an adjuster for simple fender benders.<br/>
+        • <strong>Contract Grounding:</strong> Shows <code>POL-SEC-04-COLLISION</code> so you know it's legally verified.
       </div>
     </div>
 
     <div class="footer-bar">
       <span>FNOL Claims-Triage Copilot • Non-Technical User Guide</span>
-      <span>Page 2 of 3</span>
+      <span>Page 2 of 4</span>
     </div>
   </div>
 
@@ -408,10 +403,62 @@
   <div class="page">
     <div class="header-bar">
       <span>FNOL Claims-Triage Copilot</span>
-      <span>Demo Stories & Frequently Asked Questions</span>
+      <span>Telling Your Own Story & Custom Output Screenshot</span>
     </div>
 
-    <h2>6. The 4 Demo Stories Explained in Simple Words</h2>
+    <h2>6. ✍️ Want to Tell Your Own Real-Life Story? (Custom Claim Submission)</h2>
+    <p>
+      You don't have to use the preset buttons—you can test <strong>any accident or damage story</strong> you want!
+    </p>
+
+    <div class="card">
+      <div style="font-weight: 700; font-size: 8.5pt; margin-bottom: 3px;">How to Do It in 3 Easy Steps:</div>
+      <div style="font-size: 8pt; color: #475569; line-height: 1.35;">
+        1. <strong>Click the Narrative text box:</strong> Clear out the sample text.<br/>
+        2. <strong>Type what happened in everyday English:</strong> No insurance jargon needed. Text it like you're talking to a friend.<br/>
+        3. <strong>Click the blue button:</strong> Watch the AI read your story, check your policy, and show the result in seconds!
+      </div>
+    </div>
+
+    <div class="callout-amber">
+      <div style="font-weight: 700; color: #b45309; font-size: 8.5pt; margin-bottom: 2px;">💡 4 Helpful Tips for Writing Your Story:</div>
+      <div style="font-size: 8pt; color: #92400e; line-height: 1.3;">
+        • <strong>What was damaged?</strong> (e.g. <em>"cracked side mirror"</em>, <em>"hail dimples on hood"</em>, <em>"scratched bumper"</em>)<br/>
+        • <strong>Where was the car?</strong> (e.g. <em>"in my driveway"</em>, <em>"parked outside at work"</em>, <em>"on Highway 101"</em>)<br/>
+        • <strong>Was anyone hurt?</strong> (e.g. <em>"no injuries at all"</em>)<br/>
+        • <strong>Another car involved?</strong> (e.g. <em>"single-car accident"</em> or <em>"tapped by a delivery van"</em>)
+      </div>
+    </div>
+
+    <!-- Output Screenshot 2: Custom Story -->
+    <div class="screenshot-box">
+      <img src="assets/ui_custom_story_triage.png" alt="Custom Hailstorm Story Triage Screen Output">
+    </div>
+    <div class="screenshot-caption">
+      Figure 2: Custom Story Screen Output. A user typed a real-life Hailstorm narrative. The AI immediately classified it as Comprehensive Weather coverage ($3,200 loss), verified policy clause POL-SEC-05-COMPREHENSIVE, and routed it to a paintless dent repair specialist!
+    </div>
+
+    <div class="card">
+      <div style="font-weight: 700; font-size: 8.5pt; margin-bottom: 2px;">💻 Prefer the Terminal Console?</div>
+      <div style="font-size: 8pt; color: #475569;">
+        Type <code>python -m src.cli --mode interactive</code> in PowerShell, choose <strong>[5] Custom Claim Submission</strong>, and type your accident story directly!
+      </div>
+    </div>
+
+    <div class="footer-bar">
+      <span>FNOL Claims-Triage Copilot • Non-Technical User Guide</span>
+      <span>Page 3 of 4</span>
+    </div>
+  </div>
+
+  <!-- ================================= PAGE 4 ================================= -->
+  <div class="page">
+    <div class="header-bar">
+      <span>FNOL Claims-Triage Copilot</span>
+      <span>Demo Stories, FAQ & Summary</span>
+    </div>
+
+    <h2>7. The 4 Preset Demo Stories Explained in Simple Words</h2>
 
     <div class="scenario-box">
       <div class="scenario-title">
@@ -453,39 +500,39 @@
       </div>
     </div>
 
-    <h2>7. Everyday Questions You Might Have (FAQ)</h2>
+    <h2>8. Everyday Questions You Might Have (FAQ)</h2>
 
     <div class="card">
-      <div style="font-weight: 700; font-size: 9pt; margin-bottom: 2px;">Q: Can this AI reject my claim on its own?</div>
-      <div style="font-size: 8.5pt; color: #475569;">
+      <div style="font-weight: 700; font-size: 8.5pt; margin-bottom: 2px;">Q: Can this AI reject my claim on its own?</div>
+      <div style="font-size: 8pt; color: #475569;">
         <strong>A: No, never.</strong> The AI is programmed with strict safety rules. It is <strong>never allowed to deny a claim</strong>. If there is ever any confusion or missing information, the claim is always sent to a licensed human adjuster.
       </div>
     </div>
 
     <div class="card">
-      <div style="font-weight: 700; font-size: 9pt; margin-bottom: 2px;">Q: Is my personal information kept private?</div>
-      <div style="font-size: 8.5pt; color: #475569;">
+      <div style="font-weight: 700; font-size: 8.5pt; margin-bottom: 2px;">Q: Is my personal information kept private?</div>
+      <div style="font-size: 8pt; color: #475569;">
         <strong>A: Yes, 100%.</strong> The system uses automated privacy guards that hide Social Security Numbers, driver's licenses, and policy numbers before any analysis takes place.
       </div>
     </div>
 
     <div class="card">
-      <div style="font-weight: 700; font-size: 9pt; margin-bottom: 2px;">Q: Does this mean insurance companies will fire all adjusters?</div>
-      <div style="font-size: 8.5pt; color: #475569;">
+      <div style="font-weight: 700; font-size: 8.5pt; margin-bottom: 2px;">Q: Does this mean insurance companies will fire all adjusters?</div>
+      <div style="font-size: 8pt; color: #475569;">
         <strong>A: No, it makes their jobs better.</strong> Adjusters hate reading 60-page PDF policy books and typing numbers. The Copilot does the boring paperwork so human adjusters can spend their time caring for policyholders after tough accidents.
       </div>
     </div>
 
-    <div class="callout-green" style="margin-top: 14px;">
-      <div style="font-weight: 700; color: #166534; font-size: 9.5pt; margin-bottom: 2px;">The Bottom Line:</div>
-      <div style="font-size: 8.5pt; color: #14532d;">
+    <div class="callout-green" style="margin-top: 10px;">
+      <div style="font-weight: 700; color: #166534; font-size: 9pt; margin-bottom: 2px;">The Bottom Line:</div>
+      <div style="font-size: 8pt; color: #14532d;">
         The FNOL Claims-Triage Copilot replaces phone hold music, confusing legal booklets, and 5-day delays with an instant, fair, and stress-free insurance experience.
       </div>
     </div>
 
     <div class="footer-bar">
       <span>FNOL Claims-Triage Copilot • Non-Technical User Guide</span>
-      <span>Page 3 of 3</span>
+      <span>Page 4 of 4</span>
     </div>
   </div>
 
