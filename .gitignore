@@ -23,8 +23,10 @@ htmlcov/
 # Local databases & checkpoints (ephemeral or non-committed)
 *.sqlite
 *.sqlite-journal
-data/*.sqlite
-data/*.db
+*.sqlite-wal
+*.sqlite-shm
+data/*.sqlite*
+data/*.db*
 data/test_*.sqlite
 data/test_*.db
 traces/test_*
