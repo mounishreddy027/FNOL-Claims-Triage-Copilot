@@ -107,6 +107,19 @@ class PolicyRAGTool:
     def _init_encoder(self):
         """Initialize local SentenceTransformer model."""
         try:
+            import logging
+            logging.getLogger("sentence_transformers").setLevel(logging.ERROR)
+            logging.getLogger("transformers").setLevel(logging.ERROR)
+            try:
+                import transformers.utils.logging as tf_log
+                tf_log.disable_progress_bar()
+            except Exception:
+                pass
+            try:
+                import huggingface_hub.utils.logging as hf_log
+                hf_log.disable_progress_bar()
+            except Exception:
+                pass
             from sentence_transformers import SentenceTransformer
             self.encoder = SentenceTransformer("all-MiniLM-L6-v2")
         except Exception as e:
@@ -163,7 +176,7 @@ class PolicyRAGTool:
         
         if self.encoder:
             try:
-                embeddings = self.encoder.encode(texts, normalize_embeddings=True)
+                embeddings = self.encoder.encode(texts, normalize_embeddings=True, show_progress_bar=False)
                 dim = embeddings.shape[1]
                 self.index = faiss.IndexFlatIP(dim)
                 self.index.add(np.array(embeddings, dtype=np.float32))
@@ -227,7 +240,7 @@ class PolicyRAGTool:
         retrieved = []
         if self.encoder and self.index:
             try:
-                q_emb = self.encoder.encode([query], normalize_embeddings=True)
+                q_emb = self.encoder.encode([query], normalize_embeddings=True, show_progress_bar=False)
                 scores, indices = self.index.search(np.array(q_emb, dtype=np.float32), min(len(self.chunks), 5))
                 for score, idx in zip(scores[0], indices[0]):
                     if idx < len(self.chunks) and float(score) >= 0.20:
@@ -319,20 +332,8 @@ def get_policy_rag_tool() -> PolicyRAGTool:
     return _rag_instance
 
 
-from langchain_core.tools import tool
-from src.observability.tracing import logged_tool
-
-@tool
-@logged_tool("coverage_check")
-def rag_search_policy_coverage(query: str) -> Dict[str, Any]:
-    """Search policy clauses relevant to the claim narrative and return citations."""
-    rag = get_policy_rag_tool()
-    return rag.search_policy_coverage(query)
-
-
 if __name__ == "__main__":
-    tool_inst = get_policy_rag_tool()
-    res = tool_inst.search_policy_coverage("Car was struck from behind at intersection, front bumper dented.")
+    tool = PolicyRAGTool()
+    res = tool.search_policy_coverage("Car was struck from behind at intersection, front bumper dented.")
     print("RAG Query Result:")
     print(json.dumps(res, indent=2))
-

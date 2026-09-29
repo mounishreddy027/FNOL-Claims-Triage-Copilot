@@ -8,15 +8,59 @@ Usage:
     python -m src.cli --mode test
 """
 
-import sys
 import os
+import sys
 import argparse
 import json
 import uuid
 import datetime
 import subprocess
+import warnings
+import logging
 from typing import Dict, Any
 from dotenv import load_dotenv
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
+# Suppress noisy library logs and warnings for clean terminal presentation
+os.environ["PHOENIX_LOG_LEVEL"] = "ERROR"
+os.environ["PHOENIX_ENABLE_TELEMETRY"] = "False"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["TRANSFORMERS_VERBOSITY"] = "error"
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+
+warnings.filterwarnings("ignore")
+for _noisy_logger in [
+    "httpx",
+    "httpcore",
+    "urllib3",
+    "sentence_transformers",
+    "transformers",
+    "huggingface_hub",
+    "alembic",
+    "phoenix",
+    "mcp",
+    "fastmcp",
+    "openinference",
+    "langchain_core",
+    "langchain_core.callbacks.manager",
+]:
+    logging.getLogger(_noisy_logger).setLevel(logging.ERROR)
+
+try:
+    import transformers.utils.logging as _tf_log
+    _tf_log.disable_progress_bar()
+except Exception:
+    pass
+
+try:
+    import huggingface_hub.utils.logging as _hf_log
+    _hf_log.disable_progress_bar()
+except Exception:
+    pass
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -190,7 +234,7 @@ def run_interactive_demo():
     }
 
     print("\n" + "=" * 70)
-    print(" 🚗 FNOL CLAIMS-TRIAGE COPILOT - INTERACTIVE PRODUCT DEMO")
+    print(" [*] FNOL CLAIMS-TRIAGE COPILOT - INTERACTIVE PRODUCT DEMO")
     print("=" * 70)
     print("Select a scenario to triage:\n")
     for k, sc in scenarios.items():
