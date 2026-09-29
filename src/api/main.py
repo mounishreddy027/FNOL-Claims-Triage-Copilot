@@ -16,7 +16,7 @@ import datetime
 from typing import Dict, Any, Optional, AsyncGenerator
 
 from fastapi import FastAPI, HTTPException, Request, status
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.responses import StreamingResponse, JSONResponse, HTMLResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -64,6 +64,22 @@ class ClaimTriageResponse(BaseModel):
     fraud_risk_score: float
     risk_tier: str
     timestamp: str
+
+
+@app.get("/", response_class=HTMLResponse, tags=["UI"])
+async def get_interactive_ui() -> HTMLResponse:
+    """Serve the interactive Claims Adjuster & Product Manager Copilot web interface."""
+    static_file = os.path.join(os.path.dirname(__file__), "static", "index.html")
+    if os.path.exists(static_file):
+        with open(static_file, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    return HTMLResponse("<h1>FNOL Claims-Triage Copilot API</h1><p>Visit /docs for OpenAPI specifications.</p>")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def get_favicon() -> Response:
+    """Return empty 204 response for favicon to avoid 404 noise."""
+    return Response(status_code=204)
 
 
 @app.get("/health", tags=["System"])

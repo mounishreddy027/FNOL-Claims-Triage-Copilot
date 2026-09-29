@@ -14,6 +14,20 @@ def client():
     return TestClient(app)
 
 
+def test_api_root_ui(client):
+    """Verify GET / returns 200 and loads the interactive HTML UI."""
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "text/html" in response.headers.get("content-type", "")
+    assert "FNOL Claims-Triage Copilot" in response.text
+
+
+def test_api_favicon(client):
+    """Verify GET /favicon.ico returns 204."""
+    response = client.get("/favicon.ico")
+    assert response.status_code == 204
+
+
 def test_api_health_check(client):
     """Verify /health returns 200 and toolchain details."""
     response = client.get("/health")

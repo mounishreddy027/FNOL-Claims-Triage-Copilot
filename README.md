@@ -111,11 +111,25 @@ Launch the Model Context Protocol stdio server independently:
 python -m mcp_server.server
 ```
 
-### Option H: Launch FastAPI REST & Streaming Server (Bonus / Extra Credit)
-Start the async FastAPI service with `/triage/stream` SSE live lifecycle events:
+### Option H: Launch Interactive Web Portal & Streaming Server (Recommended for PMs & Evaluators)
+Start the FastAPI service and open **`http://127.0.0.1:8000/`** in your browser to access the complete, interactive Claims Adjuster & Product Manager Web Interface (with one-click demo personas, live agent state visualizer, and human-in-the-loop review cards):
 ```bash
 python -m uvicorn src.api.main:app --port 8000
 ```
+
+### Option I: Run Interactive Terminal Console (One-Click Personas)
+Launch a guided interactive terminal menu to run pre-loaded scenarios or input custom narratives:
+```bash
+python -m src.cli --mode interactive
+```
+
+---
+
+## 📑 Product & Executive Documentation
+- **[Product Brief & PM Pitch Guide](file:///c:/Users/mouni/OneDrive/Desktop/hackathon/docs/product-brief.md):** Complete business case, ROI calculations (>99% LAE savings), 4-scenario 3-minute executive demo script, user personas, and strategic roadmap.
+- **[Compliance & Regulatory Matrix](file:///c:/Users/mouni/OneDrive/Desktop/hackathon/docs/compliance.md):** Unfair claims practices (DOI), GLBA data privacy, and AC-01..AC-10 verification.
+- **[Failure Analysis & RCA](file:///c:/Users/mouni/OneDrive/Desktop/hackathon/docs/failure-analysis.md):** Evidence-backed RCA citing verified OpenTelemetry span IDs.
+- **[Rubric Traceability Checklist](file:///c:/Users/mouni/OneDrive/Desktop/hackathon/docs/rubric_checklist.md):** 100-mark evaluation matrix mapping every requirement to verified test files.
 
 ---
 
