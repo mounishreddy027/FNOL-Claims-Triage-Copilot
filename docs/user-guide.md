@@ -116,6 +116,39 @@ Watch what happens:
 
 ---
 
+## ✍️ Want to Tell Your Own Story? (Custom Claim Submission)
+
+You don't have to use the pre-set buttons—you can test your **own real-life accident or loss story**!
+
+### How to Do It on the Web Screen (3 Simple Steps)
+1. **Find the Big Narrative Box:** Scroll down to the box labeled *"First Notice of Loss (FNOL) Narrative"*.
+2. **Clear the Text and Write in Plain English:** You don't need fancy legal words. Just describe what happened like you were texting a friend.
+3. **Hit the Blue Button:** Click *"Trigger Multi-Agent Triage Workflow"* and watch the AI analyze your unique story live!
+
+### 💡 4 Helpful Tips for Writing Your Story
+To get the most accurate result from the Copilot, include these 4 everyday details:
+1. **What happened to the car?** (e.g., *"Backed into a mailbox"*, *"A rock cracked my windshield"*, *"Hail dented the hood"*).
+2. **Where was the car?** (e.g., *"In my driveway"*, *"Parked at the grocery store"*, *"Driving on Route 66"*).
+3. **Was anyone hurt?** (e.g., *"No injuries, just a dented plastic bumper cover"* or *"Driver had mild neck soreness"*).
+4. **Is another car involved?** (e.g., *"Single car incident"* or *"T-boned by another vehicle at an intersection"*).
+
+### 🌟 3 Fun Real-World Examples to Try:
+- **Example A (Minor Comprehensive - Hail):**  
+  `"Severe hail storm yesterday afternoon while my car was parked outside at my office. Roof and hood have multiple small dimple dents. No broken glass and no one was hurt."`
+- **Example B (Driveway Mishap - Collision):**  
+  `"I was backing out of my garage this morning and scraped the side door against a metal trash bin. Scratched paint and small door crease. No other cars involved."`
+- **Example C (Animal Collision):**  
+  `"A deer suddenly jumped into the road on Highway 9 at twilight. Front passenger headlight is smashed and bumper is cracked. Airbags did not deploy and I am completely unhurt."`
+
+### 💻 Prefer the Terminal? You Can Do It There Too!
+Run:
+```bash
+python -m src.cli --mode interactive
+```
+Press **`[5]`** for *"Custom Claim Submission"*, type your story, and hit Enter!
+
+---
+
 ## ❓ Frequently Asked Questions (Everyday Concerns)
 
 ### Q: Can this AI reject my insurance claim unfairly?
