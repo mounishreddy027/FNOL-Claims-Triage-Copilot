@@ -1,35 +1,40 @@
 {
-  "report_generated_at": "2026-09-28T12:22:33.784591+00:00",
-  "total_spans": 38,
-  "total_tokens": 794,
+  "report_generated_at": "2026-09-29T17:40:56.407745+00:00",
+  "total_spans": 50,
+  "total_tokens": 4034,
   "token_breakdown": {
-    "prompt_tokens": 464,
-    "completion_tokens": 330,
-    "is_estimated": false
+    "prompt_tokens": 892,
+    "completion_tokens": 3142
   },
-  "estimated_cost_usd": 0.000134,
-  "pricing_source": "config/pricing.json",
+  "estimated_cost_usd": 0.001009,
   "latency_metrics": {
-    "p50_latency_ms": 1506.91,
-    "p95_latency_ms": 67293.82,
-    "thinking_latency_p50_ms": 5391.95,
-    "acting_latency_p50_ms": 2.02,
-    "tool_latency_p50_ms": 0.0,
-    "llm_latency_p50_ms": 5391.95
+    "p50_latency_ms": 11.06,
+    "p95_latency_ms": 1969.99,
+    "thinking_latency_p50_ms": 5.68,
+    "acting_latency_p50_ms": 3.41,
+    "tool_latency_p50_ms": 1830.83,
+    "llm_latency_p50_ms": 131.04
   },
   "success_rate_metrics": {
-    "operational_success_rate": 1.0,
-    "total_spans": 38,
-    "ok_spans": 38,
-    "error_spans": 0,
-    "semantics_explanation": "Operational success includes completed chains, graceful fallbacks, and security threat blocks."
+    "operational_success_rate": 0.96,
+    "strict_unassisted_success_rate": 0.88,
+    "span_counts": {
+      "successful_ok": 44,
+      "graceful_fallback": 3,
+      "threat_blocked": 1,
+      "unhandled_errors": 2
+    },
+    "semantics_explanation": "Operational success includes completed triage, intentional security threat blocks, and graceful 429 deterministic fallbacks."
   },
-  "success_rate": 1.0,
-  "accuracy_score": 0.95,
+  "success_rate": 0.96,
+  "accuracy_score": 1.0,
   "hallucination_rate": 0.0,
   "evaluation_metrics": {
-    "routing_accuracy": 0.95,
+    "grounded_cases_accuracy": 1.0,
     "system_hallucination_rate": 0.0,
-    "escalation_recall": 1.0
+    "negative_control_detection_recall": 1.0,
+    "grounded_cases_evaluated": 8,
+    "negative_controls_evaluated": 1,
+    "system_failures_count": 0
   }
 }

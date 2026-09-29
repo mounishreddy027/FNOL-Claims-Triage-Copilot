@@ -1,6 +1,6 @@
 {
-  "benchmark_timestamp": "2026-09-28T08:39:07.892206+00:00",
-  "judge_model": "gemini-3.5-flash-lite",
+  "benchmark_timestamp": "2026-09-29T17:40:18.200765+00:00",
+  "judge_model": "gemini-2.0-flash",
   "cases_evaluated": 9,
   "metrics_summary": {
     "average_faithfulness_score": 0.889,

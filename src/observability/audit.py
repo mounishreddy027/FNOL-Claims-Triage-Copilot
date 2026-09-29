@@ -16,8 +16,8 @@ from src.memory.tiered_memory import mask_identifier
 
 AUDIT_LOG_FILE = "logs/agent_actions.jsonl"
 
-POLICY_PATTERN = r"\bPOL-(?!\*\*\*)\d{4,10}-[A-Z]{2}\b"
-CLAIMANT_PATTERN = r"\bCLM-(?!\*\*\*)\d{4,10}-[A-Z]{2}\b"
+POLICY_PATTERN = r"\bPOL-(?!\*\*\*)[A-Z0-9]{4,10}-[A-Z0-9]{2}\b"
+CLAIMANT_PATTERN = r"\bCLM-(?!\*\*\*)[A-Z0-9]{4,10}(?:-[A-Z0-9]+)?\b"
 SSN_PATTERN = r"\b\d{3}-\d{2}-\d{4}\b"
 CC_PATTERN = r"\b(?:\d{4}[- ]?){3}\d{4}\b"
 
